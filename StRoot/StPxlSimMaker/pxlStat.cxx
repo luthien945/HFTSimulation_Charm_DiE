@@ -1,0 +1,445 @@
+#include "pxlStat.h"
+
+pxlStat::pxlStat()
+{
+//Sector1//Ladder1
+	sensor[0]=1;
+	sensor[1]=0;
+	sensor[2]=1;
+	sensor[3]=1;
+	sensor[4]=1;
+	sensor[5]=1;
+	sensor[6]=1;
+	sensor[7]=1;
+	sensor[8]=3;
+	sensor[9]=1;
+//Sector1//Ladder2
+	sensor[10]=1;
+	sensor[11]=1;
+	sensor[12]=1;
+	sensor[13]=1;
+	sensor[14]=1;
+	sensor[15]=1;
+	sensor[16]=0;
+	sensor[17]=1;
+	sensor[18]=1;
+	sensor[19]=1;
+//Sector1//Ladder3
+	sensor[20]=1;
+	sensor[21]=1;
+	sensor[22]=1;
+	sensor[23]=1;
+	sensor[24]=1;
+	sensor[25]=1;
+	sensor[26]=1;
+	sensor[27]=1;
+	sensor[28]=1;
+	sensor[29]=1;
+//Sector1//Ladder4
+	sensor[30]=1;
+	sensor[31]=2;
+	sensor[32]=1;
+	sensor[33]=1;
+	sensor[34]=1;
+	sensor[35]=1;
+	sensor[36]=1;
+	sensor[37]=1;
+	sensor[38]=1;
+	sensor[39]=1;
+//Sector2//Ladder1
+	sensor[40]=1;
+	sensor[41]=1;
+	sensor[42]=1;
+	sensor[43]=0;
+	sensor[44]=1;
+	sensor[45]=1;
+	sensor[46]=1;
+	sensor[47]=1;
+	sensor[48]=1;
+	sensor[49]=0;
+//Sector2//Ladder2
+	sensor[50]=1;
+	sensor[51]=1;
+	sensor[52]=1;
+	sensor[53]=1;
+	sensor[54]=1;
+	sensor[55]=1;
+	sensor[56]=1;
+	sensor[57]=1;
+	sensor[58]=1;
+	sensor[59]=1;
+//Sector2//Ladder3
+	sensor[60]=1;
+	sensor[61]=1;
+	sensor[62]=1;
+	sensor[63]=1;
+	sensor[64]=1;
+	sensor[65]=1;
+	sensor[66]=1;
+	sensor[67]=1;
+	sensor[68]=1;
+	sensor[69]=1;
+//Sector2//Ladder4
+	sensor[70]=1;
+	sensor[71]=1;
+	sensor[72]=1;
+	sensor[73]=1;
+	sensor[74]=1;
+	sensor[75]=1;
+	sensor[76]=1;
+	sensor[77]=1;
+	sensor[78]=1;
+	sensor[79]=1;
+//Sector3//Ladder1
+	sensor[80]=1;
+	sensor[81]=0;
+	sensor[82]=0;
+	sensor[83]=1;
+	sensor[84]=1;
+	sensor[85]=1;
+	sensor[86]=1;
+	sensor[87]=1;
+	sensor[88]=1;
+	sensor[89]=1;
+//Sector3//Ladder2
+	sensor[90]=1;
+	sensor[91]=1;
+	sensor[92]=1;
+	sensor[93]=1;
+	sensor[94]=1;
+	sensor[95]=1;
+	sensor[96]=1;
+	sensor[97]=1;
+	sensor[98]=1;
+	sensor[99]=3;
+//Sector3//Ladder3
+	sensor[100]=1;
+	sensor[101]=1;
+	sensor[102]=1;
+	sensor[103]=1;
+	sensor[104]=1;
+	sensor[105]=1;
+	sensor[106]=1;
+	sensor[107]=1;
+	sensor[108]=1;
+	sensor[109]=1;
+//Sector3//Ladder4
+	sensor[110]=1;
+	sensor[111]=1;
+	sensor[112]=1;
+	sensor[113]=1;
+	sensor[114]=1;
+	sensor[115]=1;
+	sensor[116]=1;
+	sensor[117]=1;
+	sensor[118]=1;
+	sensor[119]=1;
+//Sector4//Ladder1
+	sensor[120]=1;
+	sensor[121]=1;
+	sensor[122]=1;
+	sensor[123]=1;
+	sensor[124]=1;
+	sensor[125]=0;
+	sensor[126]=1;
+	sensor[127]=1;
+	sensor[128]=1;
+	sensor[129]=1;
+//Sector4//Ladder2
+	sensor[130]=1;
+	sensor[131]=1;
+	sensor[132]=1;
+	sensor[133]=1;
+	sensor[134]=3;
+	sensor[135]=1;
+	sensor[136]=1;
+	sensor[137]=1;
+	sensor[138]=1;
+	sensor[139]=1;
+//Sector4//Ladder3
+	sensor[140]=1;
+	sensor[141]=1;
+	sensor[142]=1;
+	sensor[143]=1;
+	sensor[144]=2;
+	sensor[145]=2;
+	sensor[146]=1;
+	sensor[147]=1;
+	sensor[148]=1;
+	sensor[149]=1;
+//Sector4//Ladder4
+	sensor[150]=1;
+	sensor[151]=1;
+	sensor[152]=1;
+	sensor[153]=1;
+	sensor[154]=2;
+	sensor[155]=1;
+	sensor[156]=1;
+	sensor[157]=2;
+	sensor[158]=1;
+	sensor[159]=1;
+//Sector5//Ladder1
+	sensor[160]=12;
+	sensor[161]=1;
+	sensor[162]=0;
+	sensor[163]=0;
+	sensor[164]=1;
+	sensor[165]=1;
+	sensor[166]=12;
+	sensor[167]=1;
+	sensor[168]=1;
+	sensor[169]=1;
+//Sector5//Ladder2
+	sensor[170]=1;
+	sensor[171]=1;
+	sensor[172]=1;
+	sensor[173]=1;
+	sensor[174]=1;
+	sensor[175]=1;
+	sensor[176]=1;
+	sensor[177]=1;
+	sensor[178]=1;
+	sensor[179]=1;
+//Sector5//Ladder3
+	sensor[180]=1;
+	sensor[181]=1;
+	sensor[182]=1;
+	sensor[183]=1;
+	sensor[184]=1;
+	sensor[185]=1;
+	sensor[186]=1;
+	sensor[187]=1;
+	sensor[188]=1;
+	sensor[189]=1;
+//Sector5//Ladder4
+	sensor[190]=1;
+	sensor[191]=1;
+	sensor[192]=1;
+	sensor[193]=1;
+	sensor[194]=1;
+	sensor[195]=1;
+	sensor[196]=1;
+	sensor[197]=1;
+	sensor[198]=1;
+	sensor[199]=1;
+//Sector6//Ladder1
+	sensor[200]=1;
+	sensor[201]=1;
+	sensor[202]=0;
+	sensor[203]=1;
+	sensor[204]=1;
+	sensor[205]=1;
+	sensor[206]=1;
+	sensor[207]=1;
+	sensor[208]=1;
+	sensor[209]=1;
+//Sector6//Ladder2
+	sensor[210]=1;
+	sensor[211]=1;
+	sensor[212]=1;
+	sensor[213]=0;
+	sensor[214]=1;
+	sensor[215]=1;
+	sensor[216]=1;
+	sensor[217]=1;
+	sensor[218]=1;
+	sensor[219]=1;
+//Sector6//Ladder3
+	sensor[220]=1;
+	sensor[221]=1;
+	sensor[222]=1;
+	sensor[223]=1;
+	sensor[224]=1;
+	sensor[225]=1;
+	sensor[226]=1;
+	sensor[227]=1;
+	sensor[228]=1;
+	sensor[229]=1;
+//Sector6//Ladder4
+	sensor[230]=0;
+	sensor[231]=0;
+	sensor[232]=0;
+	sensor[233]=0;
+	sensor[234]=0;
+	sensor[235]=0;
+	sensor[236]=0;
+	sensor[237]=0;
+	sensor[238]=0;
+	sensor[239]=0;
+//Sector7//Ladder1
+	sensor[240]=1;
+	sensor[241]=1;
+	sensor[242]=1;
+	sensor[243]=1;
+	sensor[244]=0;
+	sensor[245]=1;
+	sensor[246]=1;
+	sensor[247]=1;
+	sensor[248]=1;
+	sensor[249]=1;
+//Sector7//Ladder2
+	sensor[250]=1;
+	sensor[251]=1;
+	sensor[252]=1;
+	sensor[253]=1;
+	sensor[254]=1;
+	sensor[255]=1;
+	sensor[256]=1;
+	sensor[257]=1;
+	sensor[258]=1;
+	sensor[259]=1;
+//Sector7//Ladder3
+	sensor[260]=1;
+	sensor[261]=2;
+	sensor[262]=1;
+	sensor[263]=1;
+	sensor[264]=1;
+	sensor[265]=1;
+	sensor[266]=1;
+	sensor[267]=1;
+	sensor[268]=1;
+	sensor[269]=1;
+//Sector7//Ladder4
+	sensor[270]=1;
+	sensor[271]=2;
+	sensor[272]=2;
+	sensor[273]=1;
+	sensor[274]=2;
+	sensor[275]=1;
+	sensor[276]=2;
+	sensor[277]=1;
+	sensor[278]=1;
+	sensor[279]=1;
+//Sector8//Ladder1
+	sensor[280]=1;
+	sensor[281]=1;
+	sensor[282]=1;
+	sensor[283]=1;
+	sensor[284]=1;
+	sensor[285]=1;
+	sensor[286]=0;
+	sensor[287]=1;
+	sensor[288]=1;
+	sensor[289]=3;
+//Sector8//Ladder2
+	sensor[290]=1;
+	sensor[291]=1;
+	sensor[292]=1;
+	sensor[293]=1;
+	sensor[294]=1;
+	sensor[295]=1;
+	sensor[296]=1;
+	sensor[297]=3;
+	sensor[298]=1;
+	sensor[299]=1;
+//Sector8//Ladder3
+	sensor[300]=1;
+	sensor[301]=1;
+	sensor[302]=1;
+	sensor[303]=1;
+	sensor[304]=1;
+	sensor[305]=1;
+	sensor[306]=1;
+	sensor[307]=1;
+	sensor[308]=1;
+	sensor[309]=1;
+//Sector8//Ladder4
+	sensor[310]=1;
+	sensor[311]=1;
+	sensor[312]=1;
+	sensor[313]=1;
+	sensor[314]=1;
+	sensor[315]=1;
+	sensor[316]=1;
+	sensor[317]=1;
+	sensor[318]=1;
+	sensor[319]=1;
+//Sector9//Ladder1
+	sensor[320]=1;
+	sensor[321]=1;
+	sensor[322]=1;
+	sensor[323]=1;
+	sensor[324]=1;
+	sensor[325]=1;
+	sensor[326]=3;
+	sensor[327]=1;
+	sensor[328]=1;
+	sensor[329]=3;
+//Sector9//Ladder2
+	sensor[330]=1;
+	sensor[331]=1;
+	sensor[332]=1;
+	sensor[333]=1;
+	sensor[334]=1;
+	sensor[335]=1;
+	sensor[336]=1;
+	sensor[337]=1;
+	sensor[338]=1;
+	sensor[339]=1;
+//Sector9//Ladder3
+	sensor[340]=1;
+	sensor[341]=1;
+	sensor[342]=1;
+	sensor[343]=1;
+	sensor[344]=1;
+	sensor[345]=1;
+	sensor[346]=1;
+	sensor[347]=1;
+	sensor[348]=1;
+	sensor[349]=1;
+//Sector9//Ladder4
+	sensor[350]=1;
+	sensor[351]=1;
+	sensor[352]=1;
+	sensor[353]=1;
+	sensor[354]=1;
+	sensor[355]=1;
+	sensor[356]=1;
+	sensor[357]=1;
+	sensor[358]=2;
+	sensor[359]=1;
+//Sector10//Ladder1
+	sensor[360]=1;
+	sensor[361]=1;
+	sensor[362]=1;
+	sensor[363]=1;
+	sensor[364]=1;
+	sensor[365]=1;
+	sensor[366]=1;
+	sensor[367]=3;
+	sensor[368]=1;
+	sensor[369]=3;
+//Sector10//Ladder2
+	sensor[370]=1;
+	sensor[371]=1;
+	sensor[372]=1;
+	sensor[373]=1;
+	sensor[374]=1;
+	sensor[375]=1;
+	sensor[376]=1;
+	sensor[377]=1;
+	sensor[378]=1;
+	sensor[379]=1;
+//Sector10//Ladder3
+	sensor[380]=1;
+	sensor[381]=1;
+	sensor[382]=1;
+	sensor[383]=1;
+	sensor[384]=1;
+	sensor[385]=1;
+	sensor[386]=1;
+	sensor[387]=1;
+	sensor[388]=1;
+	sensor[389]=1;
+//Sector10//Ladder4
+	sensor[390]=1;
+	sensor[391]=1;
+	sensor[392]=1;
+	sensor[393]=1;
+	sensor[394]=1;
+	sensor[395]=1;
+	sensor[396]=1;
+	sensor[397]=1;
+	sensor[398]=1;
+	sensor[399]=1;
+}

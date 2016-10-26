@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<job filesPerHour="1" nProcesses="&nRuns;"  simulateSubmission="false">
+  <command>
+    starver SL16d
+
+    ./run.sh ${JOBID}
+
+  </command>
+
+  <stdout URL="file:&base;/../stdout/hj_$JOBID.out" />
+  <stderr URL="file:&base;/../stdout/hj_$JOBID.err" />
+
+  <Generator>
+    <Location>./jobs/report/</Location>
+    <ScriptLocation>./jobs/csh/</ScriptLocation>
+    <ListLocation>./jobs/list/</ListLocation>
+  </Generator>
+
+  <output fromScratch="*.picoDst.root" toURL="file:&base;/../output/PicoDst/" />
+
+  <SandBox installer="ZIP">
+    <Package name="Local_lib_starsim_hijing_charm">
+      <File>file:./starsim.hijing.Charm.C</File>
+      <File>file:./makePicoDst.C</File>
+      <File>file:./run.sh</File>
+      <File>file:./StRoot/</File>
+      <File>file:./StarDb/</File>
+      <File>file:./.sl64_gcc482/</File>
+    </Package>
+  </SandBox>
+
+</job>
