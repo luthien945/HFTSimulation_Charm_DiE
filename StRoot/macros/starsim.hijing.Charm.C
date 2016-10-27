@@ -13,12 +13,16 @@ StarKinematics *kinematics = 0;
 class StarGenEventReader;
 StarGenEventReader *eventreader = 0;
 
+class StarDecayManager;
+class StarPythia8Decayer;
 class StarFilterMaker;
 class StarParticleFilter;
 
 class StarPythia6;
 
-TF1 *ptDist  = 0;
+TF1 *ptDist_flat10  = 0;
+TF1 *ptDist_flat20  = 0;
+TF1 *ptDist_flat30  = 0;
 TF1 *yDist = 0;
 
 //Initialize the settings:
@@ -35,9 +39,12 @@ Float_t maxPt  = +5.0;
 Float_t minY   = -1.0;
 Float_t maxY   = +1.0;
 
+bool decayOutSidePythia = kTRUE;
+bool doDalitz = kFALSE;
+
 // charmed meson id
-const int nc = 9;
-const int charmPid[nc] = {411,421,413,423,431,4122,441,443,445}; // D+, D0, D*,Ds+,Ds,L_c,eta_c,J/psi,chi_2c
+const int nc = 4;
+const int charmPid[nc] = {411,421,431,4122}; // D+, D0,Ds,L_c
 
 // ----------------------------------------------------------------------------
 void geometry( TString tag, Bool_t agml=true )
@@ -67,11 +74,13 @@ void vertex()
     _primary->SetSigma ( 0, 0, 0);
 };
 // ----------------------------------------------------------------------------
-void trig( Int_t n=0, Int_t mode )
+void trig( Int_t n=0, Int_t mode)
 {
     for ( Int_t i=1; i<n+1; i++ ) {
 	chain->Clear();
 	vertex();
+	//if(doFlag) kinematics->Dist(100, "pi0_Dalitz", ptDist_flat30, yDist);
+	//if(doFlag) kinematics->Dist(100, "eta_Dalitz", ptDist_flat30, yDist);
 	chain->Make();
 	_primary->event()->Print();
 	//    command("gprint kine");
@@ -81,7 +90,7 @@ void trig( Int_t n=0, Int_t mode )
 void myKine()
 { 
     gSystem->Load("StarKinematics.so");
-    kinematics = new StarKinematics("D0");  
+    kinematics = new StarKinematics();  
     _primary -> AddGenerator(kinematics);
 }
 
@@ -114,13 +123,15 @@ void myPythia8()
     for(int i=0; i<nc; i++) {
 	name.Form("%i:onMode = off", charmPid[i]);
 	pythia8->Set(name.Data());
-	name.Form("%i:onIfAny = 11 -11", charmPid[i]);
-	pythia8->Set(name.Data());
-
 	name.Form("-%i:onMode = off", charmPid[i]);
 	pythia8->Set(name.Data());
-	name.Form("-%i:onIfAny = 11 -11", charmPid[i]);
-	pythia8->Set(name.Data());
+
+	if(!decayOutSidePythia) {
+	    name.Form("%i:onIfAny = 11 -11", charmPid[i]);
+	    pythia8->Set(name.Data());
+	    name.Form("-%i:onIfAny = 11 -11", charmPid[i]);
+	    pythia8->Set(name.Data());
+	}
     }
 
     _primary->AddGenerator(pythia8);
@@ -147,13 +158,21 @@ void myPythia6()
     pypars.parp(67) = 1.0; // mstp*4
 
     PyDat3_t &pydat3 = mPythia->pydat3();
-    // close decay channels other than simi-leptonic decays
-    for(int i=684; i<=735; i++)   pydat3.mdme(i   , 1) = 0; //D+
-    for(int i=755; i<=807; i++)   pydat3.mdme(i   , 1) = 0; //D0
-    pydat3.mdme(818 , 1) = 0; //Ds
-    for(int i=824; i<=850; i++)   pydat3.mdme(i   , 1) = 0; //Ds
-    for(int i=857; i<=862; i++)   pydat3.mdme(i   , 1) = 0; //eta_c , J/psi , chi_2c
-    for(int i=1097; i<=1165; i++) pydat3.mdme(i   , 1) = 0; //Lc
+
+    if(decayOutSidePythia) {
+	pydat3.mdcy(122, 1) = 0; // D0 (411)
+	pydat3.mdcy(125, 1) = 0; // D+ (421)
+	pydat3.mdcy(128, 1) = 0; // Ds (431)
+    }
+    else {
+	// close decay channels other than simi-leptonic decays
+	for(int i=684; i<=735; i++)   pydat3.mdme(i   , 1) = 0; //D+
+	for(int i=755; i<=807; i++)   pydat3.mdme(i   , 1) = 0; //D0
+	pydat3.mdme(818 , 1) = 0; //Ds
+	for(int i=824; i<=850; i++)   pydat3.mdme(i   , 1) = 0; //Ds
+	for(int i=857; i<=862; i++)   pydat3.mdme(i   , 1) = 0; //eta_c , J/psi , chi_2c
+	for(int i=1097; i<=1165; i++) pydat3.mdme(i   , 1) = 0; //Lc
+    }
 
     _primary -> AddGenerator(mPythia);
     cout<<"YiSaid : Init Pythia6 done !!"<<endl;
@@ -197,7 +216,7 @@ void Hijing()
 void myFilter(int saveMode) {
     gSystem->Load( "StarGeneratorFilt.so" );
     StarParticleFilter *filter = new StarParticleFilter();
-    for(int i=0;i<nc;i++) {
+    for(int i=0;i<2;i++) {
 	filter->AddTrigger(charmPid[i], 0, -1, -6, 6 );
 	filter->AddTrigger(-1*charmPid[i], 0, -1, -6, 6 );
     }
@@ -219,7 +238,39 @@ void myFilter(int saveMode) {
     // to kill the event. 
     //_primary->SetAttr("FilterSkipRejects", int(1) ); // enables event skipping 
     //chain->SetAttr(".Privilege",1,"StarPrimaryMaker::*" );
-//
+    //
+}
+
+// ----------------------------------------------------------------------------
+void myDecayer() {
+    //
+    // Setup decay manager
+    //
+    gSystem->Load( "StarGeneratorDecay.so" );
+    gSystem->Load( "libPythia8_1_62.so");
+    StarDecayManager   *decayMgr = AgUDecay::Manager();
+    StarPythia8Decayer *decayPy8 = new StarPythia8Decayer();
+    decayMgr->AddDecayer( 0, decayPy8 ); // Handle any decay requested 
+    decayPy8->SetDebug(1);
+    decayPy8->Set("WeakSingleBoson:all = on");
+
+
+    // set decay channel for charmed meson
+    TString name;
+    for(int i=0; i<nc; i++) {
+	name.Form("%i:onMode = off", charmPid[i]);
+	decayPy8->Set(name.Data());
+	name.Form("%i:onIfAny = 11 -11", charmPid[i]);
+	decayPy8->Set(name.Data());
+
+	name.Form("-%i:onMode = off", charmPid[i]);
+	decayPy8->Set(name.Data());
+	name.Form("-%i:onIfAny = 11 -11", charmPid[i]);
+	decayPy8->Set(name.Data());
+    }
+}
+// ----------------------------------------------------------------------------
+void myParticle() {
 }
 
 
@@ -256,7 +307,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     switch(mode) {
 	case 0:
 	    sprintf(rootname,"pythia6_charm_%d.starsim.root",Index);
-	    sprintf(fzname,"gfile o pythia6_charm_%d.starsim.fzd",Index);
+	    sprintf(fzname,"gfile o hijing_charm_%d.starsim.fzd",Index);
 	    break;
 	default:
 	    sprintf(rootname,"hijing_charm_%d.starsim.root",Index);
@@ -296,6 +347,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    infilename.Form(inPythia6File);
 	    Hijing();
 	    myEventReader(infilename);
+	    if(doDalitz)myKine();
 	    //myFilter(0);
 	    break;
 	case 2 :
@@ -317,6 +369,18 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     }
 
 
+    if(decayOutSidePythia){
+	myDecayer();
+	// Particle data
+	StarParticleData& data = StarParticleData::instance();
+	//  One can add a particle to G3 using...
+	data.AddParticleToG3( "MyD0"    , 0.1865E+01 , 0.42800E-12 , 0. , 3 , 421  , 37 , 0 , 0 );
+	data.AddParticleToG3( "MyD0bar" , 0.1865E+01 , 0.42800E-12 , 0. , 3 , -421 , 38 , 0 , 0 );
+	data.AddParticleToG3( "MyD+"    , 0.1870E+01 , 1.04000E-12 , 1  , 3 , 411  , 39 , 0 , 0 );
+	data.AddParticleToG3( "MyD-"    , 0.1870E+01 , 1.04000E-12 , -1 , 3 , -411 , 40 , 0 , 0 );
+    }
+
+
     //
     // Initialize primary event generator and all sub makers
     //
@@ -328,6 +392,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //geometry("y2014");
     command("gkine -4 0");
     if(mode !=0 && mode !=3) command(fzname);
+    //command(fzname);
 
     //Double_t pt0 = 3.0;
     //ptDist = new TF1("ptDist","(x/[0])/(1+(x/[0])^2)^6",0.0,10.0);
@@ -342,6 +407,18 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //yDist = new TF1("yDist","-TMath::Erf(x+2.6)*TMath::Erf(x-2.6)",minY,maxY);
     //yDist = new TF1("yDist","pol0",minY,maxY);
     //yDist->SetParameter(0,1.);
+
+
+    ptDist_flat10 = new TF1("ptDist_flat","pol0",0,10);
+    ptDist_flat10->SetParameter(0,1.);
+    ptDist_flat20 = new TF1("ptDist_flat","pol0",0,20);
+    ptDist_flat20->SetParameter(0,1.);
+    ptDist_flat30 = new TF1("ptDist_flat","pol0",0,30);
+    ptDist_flat30->SetParameter(0,1.);
+
+    //yDist = new TF1("yDist","-TMath::Erf(x+2.6)*TMath::Erf(x-2.6)",minY,maxY);
+    yDist = new TF1("yDist","pol0",minY,maxY);
+    yDist->SetParameter(0,1.);
 
     //phi, default 0 ~ TMath::TwoPi() flat
 

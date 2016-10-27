@@ -18,6 +18,7 @@ mkdir ./Files_$job/tpcRes
 at=`perl -e 'srand; print int(rand(99)+1)'`
 cp -p /star/institutions/lbl/mlomnitz/mlomnitz_prod/EffStudies/Sti_2015/pileup/pileupSet$at/pile**.root ./Files_$job/pile_up/pile_up$at.root
 
+function doStarPythia {
 # ---- Producing Pythia6 charmed events
 root4star <<EOF
 .L starsim.hijing.Charm.C
@@ -25,22 +26,28 @@ starsim(1,$run,$RANDOM,0)
 .q
 EOF
 mv pythia6_charm* ./Files_$job/Pythia6/.
-inPyFile=./Files_$job/Pythia6/pythia6_charm_$job.starsim.root
+#mv hijing* ./Files_$job/fzd/.
+}
 
+function doStarsim {
 # ---- Producing sim file .fzd
+inPyFile=$1
+
 root4star <<EOF
 .L starsim.hijing.Charm.C
 starsim(1,$run,$RANDOM,1,"$inPyFile")
 .q
 EOF
 mv hijing* ./Files_$job/fzd/.
+}
 
+function doTpcReco {
 echo "Lomnitz: TPC reco starting"
 # ---- TPC reconstruction
 nEvents=10
 start=0
 end=9
-inFile=Files_$job/fzd/hijing_charm_$run.starsim.fzd
+inFile=$1
 
 chain=y2014a,event,tpc,fzin,geantout,tpcrs,TpcHitMover,TpxClu,evout,-HitFilt
 
@@ -53,10 +60,12 @@ root4star -b -l <<EOF
 EOF
 
 mv hijing* Files_$job/tpc_reco/.
+}
 
+function doHftReco {
 echo "Lomnitz: HFT Reco starting"
 # ---- hft reconstruction
-inFile2=Files_$job/tpc_reco/hijing_charm_$run.event.root
+inFile2=$1
 inPile=Files_$job/pile_up/pile_up$at.root
 chain2=y2014a,event,McEvent,MuDst,in,sim_T,gen_T,geantout,evout,FieldOn,AgML,usexgeom,MakeEvent,ITTF,Sti,NoSsdIt,NoSvtIt,NoSstIt,StiHftC,pxlFastSim,istFastSim,Idst,BAna,l0,Tree,logger,genvtx,tpcDB,bbcSim,btofsim,emcY2,EEfs,evout,-dstout,IdTruth,big,McEvout,MiniMcMk,McAna,ReadAll,clearmem
 
@@ -87,11 +96,33 @@ chain->Finish();
 EOF
 mv hijing_charm_$run.tpcRes.root Files_$job/tpcRes/hijing_charm_sim_production_v0_$job.tpcRes.root
 mv *.root Files_$job/hft_reco/.
+}
+
+function doPicoDst {
 # ---- PicoDst
-root4star -l -b -q makePicoDst.C\($run,\"Files_$job/hft_reco/hijing_charm_$run.MuDst.root\",\"Files_$job/hft_reco/hijing_charm_$run.McEvent.root\"\)
+inMuDst=$1
+inMcEvt=$2
+root4star -l -b -q makePicoDst.C\($run,\"$inMuDst\",\"$inMcEvt\"\)
 find . -type f -name "*.picoDst.root" -exec chgrp rhstar {} \;
 find . -type f -name "*.picoDst.root" -exec chmod g+rw {} \;
 mv *.picoDst.root hijing_charm_sim_production_v0_$run.picoDst.root
+}
+
+inPyFile=./Files_$job/Pythia6/pythia6_charm_$run.starsim.root
+inFzd=Files_$job/fzd/hijing_charm_$run.starsim.fzd
+inEvent=Files_$job/tpc_reco/hijing_charm_$run.event.root
+inMuDst=Files_$job/hft_reco/hijing_charm_$run.MuDst.root
+inMcEvt=Files_$job/hft_reco/hijing_charm_$run.McEvent.root
+
+if [ ! -e "$inPyFile" ]; then
+doStarPythia
+fi
+
+doStarsim $inPyFile 
+doTpcReco $inFzd
+doHftReco $inEvent
+doPicoDst $inMuDst $inMcEvt
+
 #privilges
 #find . -type f -name "*.picoDst.root" -exec chmod g+rw {} \;
 #find Files_$job/ -type d -exec chgrp rhstar {} \;
