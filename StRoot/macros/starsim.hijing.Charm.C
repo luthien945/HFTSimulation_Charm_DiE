@@ -392,7 +392,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //geometry("y2014");
     command("gkine -4 0");
     if(mode !=0 && mode !=3) command(fzname);
-    //command(fzname);
+    command(fzname);
 
     //Double_t pt0 = 3.0;
     //ptDist = new TF1("ptDist","(x/[0])/(1+(x/[0])^2)^6",0.0,10.0);

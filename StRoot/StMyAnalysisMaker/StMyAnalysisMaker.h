@@ -36,10 +36,26 @@ class StMyAnalysisMaker : public StMaker {
 	virtual void  Clear(Option_t *opt="");
 	virtual Int_t Finish();
     private:
-	StPicoDstMaker *mPicoMaker;
-	StPicoEvent *mPicoEvent;
+	bool isGoodEvent();
+	int  loopTrack();
+	int  getParent(StPicoMcTrack const * const mcTrk, bool doTraceUp);
+
+	StPicoDstMaker * mPicoDstMaker;
+	StPicoDst      * mPicoDst;
+	StPicoEvent    * mPicoEvent;
 
 	TFile *mOutFile;
 
+	StThreeVectorF pVtx;
+	float bField;
+	int nMcTracks;
+	int nRcTracks;
+
+	std::vector<Int_t> rcEid;
+	std::vector<Int_t> rcPid;
+	std::vector<Int_t> mcEid;
+	std::vector<Int_t> mcPid;
+
 	ClassDef(StMyAnalysisMaker, 0)
-}
+};
+#endif

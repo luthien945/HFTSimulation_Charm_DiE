@@ -7,6 +7,7 @@
 #include "StPicoMcEvent.h"
 #include "StPicoTrack.h"
 #include "StPicoMcTrack.h"
+#include "StPicoMcVertex.h"
 #include "StPicoV0.h"
 #include "StPicoEmcTrigger.h"
 #include "StPicoMtdTrigger.h"
@@ -80,6 +81,7 @@
 #include "StEvent/StRnDHitCollection.h"
 #include "StEvent/StRnDHit.h"
 #include "StMcEvent/StMcTrack.hh"
+#include "StMcEvent/StMcVertex.hh"
 #include "StEvent/StEvent.h"
 
 ClassImp(StPicoDstMaker)
@@ -631,6 +633,8 @@ Int_t StPicoDstMaker::MakeWrite() {
       mRcTrackMap = mAssoc->rcTrackMap();
       mMcTrackMap = mAssoc->mcTrackMap();
     }
+    cout<<"Filling mc secondary vtx"<<endl;
+    fillMcVertices();
     cout<<"Filling mc"<<endl;
     fillTracksMc();
     cout<<"Filling tracks"<<endl;
@@ -1067,6 +1071,17 @@ void StPicoDstMaker::fillEvent() {
 
 //  mPicoDst->Print() ;
 }
+//-----------------------------------------------------------------------
+void StPicoDstMaker::fillMcVertices(){
+    StSPtrVecMcVertex mcvertices = (StSPtrVecMcVertex)mMcEvent->vertices();
+    // the first one is primaryvertex
+    for(int it=1; it<mcvertices.size(); it++) {
+	StMcVertex* mcVtx = dynamic_cast<StMcVertex *>(mcvertices[it]);
+	int counter = mPicoArrays[picoMcVertex]->GetEntries();
+	new((*(mPicoArrays[picoMcVertex]))[counter]) StPicoMcVertex(mcVtx);
+    }
+}
+//-----------------------------------------------------------------------
 void StPicoDstMaker::fillMcEvent(){
   int counter = mPicoArrays[picoMcEvent]->GetEntries();
   new((*(mPicoArrays[picoMcEvent]))[counter]) StPicoMcEvent(mMcEvent);

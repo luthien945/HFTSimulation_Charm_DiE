@@ -5,10 +5,10 @@ enum picoDstTypes {picoEvent=0,picoTrack,
 		   picoEmcTrigger, picoMtdTrigger, 
 		   picoBTOWHit, picoBTofHit, picoMtdHit,
 		   picoEmcPidTraits, picoBTofPidTraits, picoMtdPidTraits,
-		   picoMcEvent, picoMcTrack};
+		   picoMcEvent, picoMcTrack, picoMcVertex};
 enum v0Types {picoV0Ks=0, picoV0L, picoV0Lbar};
 enum NPICOARRAYS {
-__NPICOARRAYS__ = 12,
+__NPICOARRAYS__ = 13,
 __NPICOV0ARRAYS__ = 3,
 __NALLPICOARRAYS__ = __NPICOARRAYS__+__NPICOV0ARRAYS__
 };

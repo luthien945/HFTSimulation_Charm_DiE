@@ -1,5 +1,5 @@
 #!/bin/sh
-starver SL16d
+#starver SL16d
 job=$1
 #run=${job: -1}
 #run=$job;
@@ -26,7 +26,7 @@ starsim(1,$run,$RANDOM,0)
 .q
 EOF
 mv pythia6_charm* ./Files_$job/Pythia6/.
-#mv hijing* ./Files_$job/fzd/.
+mv hijing* ./Files_$job/fzd/.
 }
 
 function doStarsim {
@@ -114,13 +114,13 @@ inEvent=Files_$job/tpc_reco/hijing_charm_$run.event.root
 inMuDst=Files_$job/hft_reco/hijing_charm_$run.MuDst.root
 inMcEvt=Files_$job/hft_reco/hijing_charm_$run.McEvent.root
 
-if [ ! -e "$inPyFile" ]; then
-doStarPythia
-fi
+#if [ ! -e "$inPyFile" ]; then
+#doStarPythia
+#fi
 
-doStarsim $inPyFile 
-doTpcReco $inFzd
-doHftReco $inEvent
+#doStarsim $inPyFile 
+#doTpcReco $inFzd
+#doHftReco $inEvent
 doPicoDst $inMuDst $inMcEvt
 
 #privilges

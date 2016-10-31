@@ -18,6 +18,7 @@ class StPicoEvent;
 class StPicoMcEvent;
 class StPicoTrack;
 class StPicoMcTrack;
+class StPicoMcVertex;
 class StPicoV0;
 class StPicoEmcTrigger;
 class StPicoBTOWHit;
@@ -107,6 +108,7 @@ class StPicoDstMaker : public StMaker {
    Int_t MakeRead();
    Int_t MakeWrite();
 
+   void fillMcVertices();
    void fillTracks();
    void fillTracksMc();
    const StGlobalTrack* findPartner(StMcTrack* , int&);
