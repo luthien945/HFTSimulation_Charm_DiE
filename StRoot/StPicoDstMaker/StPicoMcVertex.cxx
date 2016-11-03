@@ -20,37 +20,21 @@ StPicoMcVertex::StPicoMcVertex(StPicoMcVertex *v)
 {
 }
 //----------------------------------------------- 
-StPicoMcVertex::StPicoMcVertex(StMcVertex *mcVtx) 
+StPicoMcVertex::StPicoMcVertex(const StMcVertex *mcVtx) 
 {
     mIndex  = mcVtx->key();
     mPosition = mcVtx->position();
     const StMcTrack *parentTrack = mcVtx->parent();
-    if(parentTrack)mParentId = parentTrack->key();
+    if(parentTrack) mParentId = parentTrack->key();
     else mParentId = Pico::SHORTMAX;
 
-    UShort_t tempId = 0;
+    UShort_t tempId = Pico::SHORTMAX;
     for(int it=0; it<mcVtx->numberOfDaughters(); it++) {
         const StMcTrack *tmpTrk = mcVtx->daughter(it);
 	if(!tmpTrk) continue;
 	tempId = tmpTrk->key();
 	mDaughterId.push_back(tempId);
     }
-
-    int mParGid = -999;
-    if(parentTrack)mParGid = parentTrack->geantId();
-    if(mParGid<37 || mParGid>40) return;
-    cout<<"//============================================"<<endl;
-    cout<<"test McVertex : "<<mIndex<<endl;
-    cout<<"test ParentId : "<<mParentId<<endl;
-    cout<<"test ParentGeId : "<<mParGid<<endl;
-    cout<<"test number of daughter: "<<nDaughters()<<endl;
-    for(int it=0; it<mcVtx->numberOfDaughters(); it++) {
-        const StMcTrack *tmpTrk = mcVtx->daughter(it);
-	if(!tmpTrk) continue;
-	tempId = tmpTrk->key();
-	cout<<"  daughter"<<it+1<<" GeId : "<< tmpTrk->geantId()<<endl;
-    }
-
 }
 
 //----------------------------------------------- 
@@ -60,8 +44,20 @@ StPicoMcVertex::~StPicoMcVertex()
 }
 
 //----------------------------------------------- 
-void StPicoMcVertex::print() const {
+void StPicoMcVertex::print(const StMcVertex * mcVtx) const {
+    int mParGid = -999;
+    const StMcTrack *parentTrack = mcVtx->parent();
+    if(!parentTrack) return;
+    mParGid = parentTrack->geantId();
+    if(mParGid<12037 || mParGid>12044) return;
+    cout<<"//============================================"<<endl;
     cout<<"test McVertex : "<<mIndex<<endl;
     cout<<"test ParentId : "<<mParentId<<endl;
+    cout<<"test ParentGeId : "<<mParGid<<endl;
     cout<<"test number of daughter: "<<nDaughters()<<endl;
+    for(int it=0; it<mcVtx->numberOfDaughters(); it++) {
+        const StMcTrack *tmpTrk = mcVtx->daughter(it);
+	if(!tmpTrk) continue;
+	cout<<"  daughter"<<it+1<<" GeId : "<< tmpTrk->geantId()<<endl;
+    }
 }

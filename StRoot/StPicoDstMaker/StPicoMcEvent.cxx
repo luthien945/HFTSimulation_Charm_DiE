@@ -7,8 +7,10 @@ StPicoMcEvent::StPicoMcEvent() :
 {
   ;
 }
-StPicoMcEvent::StPicoMcEvent(StMcEvent const* mcEvent) : 
-  mVertex(mcEvent->primaryVertex()->position())
+StPicoMcEvent::StPicoMcEvent(StMcEvent const* mcEvent, map<Int_t, Int_t> mcKey2PicoId, map<Int_t, Int_t> picoId2McKey) : 
+  mVertex(mcEvent->primaryVertex()->position()),
+  mMcKey2PicoId(mcKey2PicoId), 
+  mPicoId2McKey(picoId2McKey)
 {
   ;
 }

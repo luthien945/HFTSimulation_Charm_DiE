@@ -1,20 +1,23 @@
 #ifndef histClass_H
 #define histClass_H
 
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TList.h"
-
+class TH1F;
+class TH2F;
+class TFile;
+class TList;
 
 class histClass {
     public:
 	histClass();
+	histClass(char * filename);
+	histClass(TFile *outFile);
 	~histClass();
 	int initHist();
 	int writeHist();
 	int deleteHist();
 	TList *listHist();
 
+	TFile *mFile;
 	TList *mList;
 	// Add histogram
 	TH1F *hEvtCounter; // 0 nevt, 1~50 GeantId
@@ -96,9 +99,7 @@ class histClass {
 	TH2F *hRc_charm_DcaZVsPhi;
 	TH2F *hRc_charm_DcaZVsEta;
 
-
 	// pair 
 	TH1F *hPairMass;
-}
-
-inline TList* histClass::initHist() { return mList; }
+};
+#endif

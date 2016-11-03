@@ -10,6 +10,7 @@
 #include "../StPicoDstMaker/StPicoTrack.h"
 #include "../StPicoDstMaker/StPicoMcEvent.h"
 #include "../StPicoDstMaker/StPicoMcTrack.h"
+#include "../StPicoDstMaker/StPicoMcVertex.h"
 
 #include "StMyAnalysisMaker.h"
 #include "Cuts.h"
@@ -32,6 +33,7 @@ Int_t StMyAnalysisMaker::Init() {
 void StMyAnalysisMaker::Clear(Option_t *opt) {
     mPicoDst = NULL;
     mPicoEvent = NULL;
+    mPicoMcEvent = NULL;
 
     rcEid.clear();
     rcPid.clear();
@@ -54,8 +56,10 @@ Int_t StMyAnalysisMaker::Make() {
     }
     
     mPicoEvent = mPicoDst->event();
+    mPicoMcEvent = mPicoDst->mcevent();
     if(!isGoodEvent()) return kStOK;
-    loopTrack();
+    loopMcTrack();
+    loopMcVertex();
 
     return kStOK;
 }
@@ -77,7 +81,7 @@ bool StMyAnalysisMaker::isGoodEvent()
     return fabs(pVtx.z()) < cuts::vz ;
 }
 
-int StMyAnalysisMaker::loopTrack() {
+int StMyAnalysisMaker::loopMcTrack() {
     nMcTracks = mPicoDst->numberOfMcTracks();
 
     cout<<"Number of mctracks : "<<nMcTracks<<endl;
@@ -86,7 +90,9 @@ int StMyAnalysisMaker::loopTrack() {
 	int gePid = mcTrk->GePid();
 	int parentId = getParent(mcTrk, kFALSE);
 	int ancestorId = getParent(mcTrk, kTRUE);
-	if(gePid>=37 && gePid<=40) cout<<"Charmed : "<<gePid<<endl;
+	if(gePid>=12037 && gePid<=12044) {
+	    cout<<"Charmed : "<<gePid<<endl;
+	}
 	int parentGeId = -999;
 	int ancestorGeId = -999;
 	if(parentId>=0 && parentId<=Pico::USHORTMAX) {
@@ -99,9 +105,9 @@ int StMyAnalysisMaker::loopTrack() {
 	    ancestorGeId = mcAncestorTrk->GePid();
 	}
 
-	//if(parentGeId>=37 && parentGeId<=40) {
-	//    cout<<"A charm decays : "<<parentGeId<<"->"<<gePid<<endl;
-	//}
+	if(parentGeId>=12037 && parentGeId<=12044) {
+	    cout<<"A charm decays : "<<parentGeId<<"->"<<gePid<<endl;
+	}
 	//if(gePid==cuts::dau1Gid || gePid==cuts::dau2Gid) {
 	//    cout<<"I get an electron";
 	//    if(parentGeId >= 37 && parentGeId <=40) {
@@ -112,17 +118,47 @@ int StMyAnalysisMaker::loopTrack() {
 	//	    <<" gePid = "<<gePid<<endl;
 	//    }
 	//}
-	cout<<"["<<std::setw(5)<<itMc<<", "<<std::setw(5)<<gePid<<" ]"
-	    <<"["<<std::setw(5)<<parentId<<", "<<std::setw(5)<<parentGeId<<" ]"
-	    <<endl;
+	//cout<<"["<<std::setw(5)<<itMc<<", "<<std::setw(5)<<gePid<<" ]"
+	//    <<"["<<std::setw(5)<<parentId<<", "<<std::setw(5)<<parentGeId<<" ]"
+	//    <<endl;
     }
+}
 
+int StMyAnalysisMaker::loopMcVertex() {
+    int nMcVertices = mPicoDst->numberOfMcVertices();
+    cout<<"Number of mcvertices : "<<nMcVertices<<endl;
+
+    for(int itMc = 0; itMc<nMcVertices; itMc++) {
+        StPicoMcVertex *mcVtx = (StPicoMcVertex*) mPicoDst->mcvertex(itMc);
+        int parentId = mcVtx->parentId();
+	if(parentId==Pico::SHORTMAX) continue;
+	parentId = mPicoMcEvent->mcKey2PicoId().at(parentId);
+        StPicoMcTrack *mcParentTrk = (StPicoMcTrack *) mPicoDst->mctrack(parentId);
+        int parentGeId = -999;
+        if(mcParentTrk) parentGeId = mcParentTrk->GePid();
+
+        if(parentGeId>=12037 && parentGeId<=12044) {
+            cout<<"Vertex : "<<itMc<<endl
+        	<<"  ["<<std::setw(5)<<parentId<<", "<<std::setw(5)<<parentGeId<<"]-->";
+            if(mcVtx->nDaughters()<=0) continue;
+            for(int i=0; i<mcVtx->nDaughters(); i++) {
+        	int daughterId = mcVtx->daughterId(i);
+		daughterId = mPicoMcEvent->mcKey2PicoId().at(daughterId);
+        	StPicoMcTrack *mcDaughterTrk = (StPicoMcTrack *) mPicoDst->mctrack(daughterId); 
+        	if(!mcDaughterTrk) continue; 
+        	int daughterGeId = mcDaughterTrk->GePid();
+        	cout<<"["<<std::setw(5)<<daughterId<<", "<<std::setw(5)<<daughterGeId<<"]";
+            }
+            cout<<endl;
+        }
+    }
 }
 
 int StMyAnalysisMaker::getParent(StPicoMcTrack const * const mcTrk, bool doTraceUp) {
     if(mcTrk->parentId()==Pico::USHORTMAX || mcTrk->parentId()==mcTrk->mcId()) return -999;
 
     int parentId = mcTrk->parentId();
+    parentId = mPicoMcEvent->mcKey2PicoId().at(parentId);
     StPicoMcTrack *mcParentTrack = (StPicoMcTrack*) mPicoDst->mctrack(parentId);
     if(parentId != mcParentTrack->parentId() && doTraceUp) parentId = getParent(mcParentTrack, doTraceUp);
     return parentId;

@@ -36,6 +36,7 @@ class StMcEvent;
 #include <vector>
 #include <utility>
 #include <string>
+#include <map>
 
 #if !defined(ST_NO_NAMESPACES)
 using namespace std;
@@ -101,6 +102,7 @@ class StPicoDstMaker : public StMaker {
 
    void assignArrays();
    void clearArrays();
+   void clearMaps();
    void zeroArrays();
    void createArrays();
    TClonesArray* clonesArray(TClonesArray*& p, const char* type, int size, int& counter);
@@ -173,6 +175,10 @@ class StPicoDstMaker : public StMaker {
    
    Int_t mIndex2Primary[nTrk];
    Int_t mMap2Track[nTrk];
+
+   // map between StMyTrack::key() and id in mPicoAllArray[StMcTrack].
+   map<Int_t, Int_t> mPicoId2McKey; 
+   map<Int_t, Int_t> mMcKey2PicoId;
 
    //
    TH1D*    mPhiWgtHist[nCen+1][nEW*nDet];

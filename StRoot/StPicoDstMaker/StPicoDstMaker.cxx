@@ -506,6 +506,12 @@ void StPicoDstMaker::Clear(const char *){
   if (mIoMode==ioRead)
     return;
   clearArrays();
+  clearMaps();
+}
+//_____________________________________________________________________________
+void StPicoDstMaker::clearMaps() {
+    mPicoId2McKey.clear();
+    mMcKey2PicoId.clear();
 }
 //_____________________________________________________________________________
 void StPicoDstMaker::closeRead() {
@@ -633,10 +639,10 @@ Int_t StPicoDstMaker::MakeWrite() {
       mRcTrackMap = mAssoc->rcTrackMap();
       mMcTrackMap = mAssoc->mcTrackMap();
     }
-    cout<<"Filling mc secondary vtx"<<endl;
-    fillMcVertices();
     cout<<"Filling mc"<<endl;
     fillTracksMc();
+    cout<<"Filling mc secondary vtx"<<endl;
+    fillMcVertices();
     cout<<"Filling tracks"<<endl;
     fillTracks();
     fillMcEvent();
@@ -694,6 +700,8 @@ void StPicoDstMaker::fillTracksMc() {
     
     int counter = mPicoArrays[picoMcTrack]->GetEntries();
     new((*(mPicoArrays[picoMcTrack]))[counter]) StPicoMcTrack(mcTrk, rT,nCommonHits);
+    mPicoId2McKey[counter] = mcTrk->key();
+    mMcKey2PicoId[mcTrk->key()] = counter;
     //StPicoMcTrack mcTrack(mcTrk, rT);
   }  
 }
@@ -1078,13 +1086,14 @@ void StPicoDstMaker::fillMcVertices(){
     for(int it=1; it<mcvertices.size(); it++) {
 	StMcVertex* mcVtx = dynamic_cast<StMcVertex *>(mcvertices[it]);
 	int counter = mPicoArrays[picoMcVertex]->GetEntries();
-	new((*(mPicoArrays[picoMcVertex]))[counter]) StPicoMcVertex(mcVtx);
+	StPicoMcVertex *tmp = new((*(mPicoArrays[picoMcVertex]))[counter]) StPicoMcVertex(mcVtx);
+	//tmp->print(mcVtx);
     }
 }
 //-----------------------------------------------------------------------
 void StPicoDstMaker::fillMcEvent(){
   int counter = mPicoArrays[picoMcEvent]->GetEntries();
-  new((*(mPicoArrays[picoMcEvent]))[counter]) StPicoMcEvent(mMcEvent);
+  new((*(mPicoArrays[picoMcEvent]))[counter]) StPicoMcEvent(mMcEvent, mMcKey2PicoId, mPicoId2McKey);
   return;
 }
 //-----------------------------------------------------------------------

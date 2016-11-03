@@ -9,6 +9,7 @@ class StMcTrack;
 #include <stdio.h>
 #include <math.h>
 #include <vector>
+#include <map>
 #include "StThreeVectorF.hh"
 
 class StPicoMcVertex : public TObject {
@@ -16,14 +17,14 @@ class StPicoMcVertex : public TObject {
 	StPicoMcVertex();
 	~StPicoMcVertex();
 	StPicoMcVertex(StPicoMcVertex *);
-	StPicoMcVertex(StMcVertex *);
+	StPicoMcVertex(const StMcVertex *);
 
 	Int_t index() const;
 	Int_t parentId() const;
 	StThreeVectorF const & positions() const;
 	Int_t daughterId(int it) const;
 	Int_t nDaughters() const;
-	void print() const;
+	void print(const StMcVertex *mcVtx) const;
 
 
     protected:

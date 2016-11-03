@@ -1,5 +1,7 @@
 #!/bin/sh
-#starver SL16d
+starver SL16d
+current_data_time="`date \"+%m/%d %H:%M:%S\"`"
+echo $current_data_time
 job=$1
 #run=${job: -1}
 #run=$job;
@@ -7,6 +9,7 @@ run=`perl -e "my @ss = split /_/, \"$job\"; print @ss[1];"`
 echo  runid: $run
 echo  jobid: $job
 mkdir ./Files_$job
+mkdir ./Files_$job/Hijing
 mkdir ./Files_$job/Pythia6
 mkdir ./Files_$job/fzd
 mkdir ./Files_$job/tpc_reco
@@ -18,27 +21,56 @@ mkdir ./Files_$job/tpcRes
 at=`perl -e 'srand; print int(rand(99)+1)'`
 cp -p /star/institutions/lbl/mlomnitz/mlomnitz_prod/EffStudies/Sti_2015/pileup/pileupSet$at/pile**.root ./Files_$job/pile_up/pile_up$at.root
 
+nevt=4
+
 function doStarPythia {
 # ---- Producing Pythia6 charmed events
+echo "Generating pythia charm event"
 root4star <<EOF
 .L starsim.hijing.Charm.C
-starsim(1,$run,$RANDOM,0)
+starsim($nevt,$run,$RANDOM,0)
 .q
 EOF
 mv pythia6_charm* ./Files_$job/Pythia6/.
-mv hijing* ./Files_$job/fzd/.
+#mv hijing* ./Files_$job/fzd/.
+}
+
+function doStarHijing {
+# ---- Producing Pythia6 charmed events
+echo "Generating Hijing BG event"
+root4star <<EOF
+.L starsim.hijing.Charm.C
+starsim($nevt,$run,$RANDOM,4)
+.q
+EOF
+mv hijing* ./Files_$job/Hijing/.
 }
 
 function doStarsim {
 # ---- Producing sim file .fzd
+echo "A hijing......"
+inPyFile=$1
+inMode=$2
+
+root4star <<EOF
+.L starsim.hijing.Charm.C
+starsim($nevt,$run,$RANDOM,$inMode,"$inPyFile")
+.q
+EOF
+mv hijing* ./Files_$job/fzd/.
+}
+
+function doTest {
+# ---- Producing sim file .fzd
+echo "do test"
 inPyFile=$1
 
 root4star <<EOF
 .L starsim.hijing.Charm.C
-starsim(1,$run,$RANDOM,1,"$inPyFile")
+starsim($nevt,$run,$RANDOM,3,"$inPyFile")
 .q
 EOF
-mv hijing* ./Files_$job/fzd/.
+#mv hijing* ./Files_$job/fzd/.
 }
 
 function doTpcReco {
@@ -109,19 +141,41 @@ mv *.picoDst.root hijing_charm_sim_production_v0_$run.picoDst.root
 }
 
 inPyFile=./Files_$job/Pythia6/pythia6_charm_$run.starsim.root
+inHjFile=./Files_$job/Hijing/hijing_charm_$run.starsim.root
 inFzd=Files_$job/fzd/hijing_charm_$run.starsim.fzd
 inEvent=Files_$job/tpc_reco/hijing_charm_$run.event.root
 inMuDst=Files_$job/hft_reco/hijing_charm_$run.MuDst.root
 inMcEvt=Files_$job/hft_reco/hijing_charm_$run.McEvent.root
 
-#if [ ! -e "$inPyFile" ]; then
-#doStarPythia
+if [ ! -e "$inPyFile" ]; then
+doStarPythia
+fi
+doStarsim $inPyFile 1
+
+doTpcReco $inFzd
+doHftReco $inEvent
+doPicoDst $inMuDst $inMcEvt
+
+
+# for test
+#doTest $inPyFile
+#if [ ! -e "$inHjFile" ]; then
+#doStarHijing
 #fi
 
-#doStarsim $inPyFile 
-#doTpcReco $inFzd
-#doHftReco $inEvent
-doPicoDst $inMuDst $inMcEvt
+#if [ -e "$inPyFile" ];  then
+#echo "Run Hijing + eventReader"
+#doStarsim $inPyFile 1
+#elif [ -e "$inHjFile" ]; then
+#echo "Run pythia6 + eventReader"
+#doStarsim $inHjFile 5
+#else
+#echo "No bg file !!!!!"
+#fi
+
+current_data_time="`date \"+%m/%d %H:%M:%S\"`"
+echo $current_data_time
+
 
 #privilges
 #find . -type f -name "*.picoDst.root" -exec chmod g+rw {} \;

@@ -22,7 +22,9 @@ class StPicoDst;
 class StPicoDstMaker;
 class StPicoEvent;
 class StPicoTrack;
+class StPicoMcEvent;
 class StPicoMcTrack;
+class StPicoMcVertex;
 class TString;
 class StDcaGeometry;
 
@@ -37,12 +39,14 @@ class StMyAnalysisMaker : public StMaker {
 	virtual Int_t Finish();
     private:
 	bool isGoodEvent();
-	int  loopTrack();
+	int  loopMcTrack();
+	int  loopMcVertex();
 	int  getParent(StPicoMcTrack const * const mcTrk, bool doTraceUp);
 
 	StPicoDstMaker * mPicoDstMaker;
 	StPicoDst      * mPicoDst;
 	StPicoEvent    * mPicoEvent;
+	StPicoMcEvent  * mPicoMcEvent;
 
 	TFile *mOutFile;
 

@@ -39,8 +39,6 @@ Float_t maxPt  = +5.0;
 Float_t minY   = -1.0;
 Float_t maxY   = +1.0;
 
-bool decayOutSidePythia = kTRUE;
-bool doDalitz = kFALSE;
 
 // charmed meson id
 const int nc = 4;
@@ -83,7 +81,7 @@ void trig( Int_t n=0, Int_t mode)
 	//if(doFlag) kinematics->Dist(100, "eta_Dalitz", ptDist_flat30, yDist);
 	chain->Make();
 	_primary->event()->Print();
-	//    command("gprint kine");
+	if(i==1) command("gprint kine");
     }
 }
 // ----------------------------------------------------------------------------
@@ -107,6 +105,7 @@ void myEventReader(char *infilename)
 // ----------------------------------------------------------------------------
 void myPythia8() 
 {
+    cout<<"YiSaid : Init Pythia8......."<<endl;
     gSystem->Load("Pythia8_1_62.so");
     StarPythia8 *pythia8 = new StarPythia8();
     pythia8->SetFrame("CMS",200.0);
@@ -135,11 +134,12 @@ void myPythia8()
     }
 
     _primary->AddGenerator(pythia8);
+    cout<<"YiSaid : Init Pythia8...done"<<endl;
 
 }
 
 // ----------------------------------------------------------------------------
-void myPythia6()
+void myPythia6(bool mode = kFALSE)
 {
     cout<<"YiSaid : Init Pythia6......."<<endl;
     gSystem->Load( "libPythia6_4_28.so");
@@ -159,10 +159,13 @@ void myPythia6()
 
     PyDat3_t &pydat3 = mPythia->pydat3();
 
-    if(decayOutSidePythia) {
+    if(mode) {
+	// use an outside decayer
+	// turn off the decays in pythia
 	pydat3.mdcy(122, 1) = 0; // D0 (411)
 	pydat3.mdcy(125, 1) = 0; // D+ (421)
 	pydat3.mdcy(128, 1) = 0; // Ds (431)
+	pydat3.mdcy(181, 1) = 0; // Lc (4122)
     }
     else {
 	// close decay channels other than simi-leptonic decays
@@ -180,7 +183,7 @@ void myPythia6()
 
 
 // ----------------------------------------------------------------------------
-void Hijing()
+void Hijing(bool decayMode = kFALSE)
 {
     cout<<"YiSaid : Init Hijing......."<<endl;
     gSystem->Load( "libHijing1_383.so");
@@ -193,18 +196,28 @@ void Hijing()
     hijing->SetYell("Au");  
     //hijing->SetImpact(0.0, 30.0);       // Impact parameter min/max (fm)    0.   30.
     //hijing->SetImpact(0.0, 4.5);       // 0-10% central
-    hijing->SetImpact(0.0, 4.5);       // 0-80% central
+    hijing->SetImpact(0.0, 20.);       // 0-80% central
+    
     hijing->hiparnt().ihpr2(4) = 0;     // Jet quenching (1=yes/0=no)       0
     hijing->hiparnt().ihpr2(3) = 0;     // Hard scattering (1=yes/0=no)
     hijing->hiparnt().hipr1(10) = 2.0;  //    pT jet
     hijing->hiparnt().ihpr2(8)  = 10;   // Max number of jets / nucleon
     hijing->hiparnt().ihpr2(11) = 1;    // Set baryon production
-    hijing->hiparnt().ihpr2(12) = 1;    // Turn on/off decay of particles [1=recommended]
+    hijing->hiparnt().ihpr2(12) = 0;    // Turn on/off decay of particles [1=recommended]
     hijing->hiparnt().ihpr2(18) = 1;    // Turn on/off B production
     hijing->hiparnt().hipr1(7) = 5.35;  // Set B production ???? Not really used... Really ????
 
     // For more configuration options, see the HIJING manual
     // http://ntc0.lbl.gov/~xnwang/hijing/doc.html
+
+    // if use outside decayer, switch off charm meson decays
+    if(decayMode) {
+	cout<<"YiSaid : turn off the decay of charm mesons"<<endl;
+	hijing->ludat3().mdcy(122, 1) = 0; // D0 (411)
+	hijing->ludat3().mdcy(125, 1) = 0; // D+ (421)
+	hijing->ludat3().mdcy(128, 1) = 0; // Ds (431)
+	hijing->ludat3().mdcy(181, 1) = 0; // Lc (4122)
+    }
 
     _primary -> AddGenerator(hijing);
     _primary -> SetCuts( 1.0E-6 , -1., -2.6, 2.6 );
@@ -212,13 +225,17 @@ void Hijing()
     cout<<"YiSaid : Init Hijing done !!"<<endl;
 
 }
+
 // ----------------------------------------------------------------------------
 void myFilter(int saveMode) {
+    cout<<"YiSaid : Init Filter....."<<endl;
     gSystem->Load( "StarGeneratorFilt.so" );
     StarParticleFilter *filter = new StarParticleFilter();
-    for(int i=0;i<2;i++) {
-	filter->AddTrigger(charmPid[i], 0, -1, -6, 6 );
-	filter->AddTrigger(-1*charmPid[i], 0, -1, -6, 6 );
+
+    for(int i=0;i<nc;i++) {
+	filter->AddTrigger(charmPid[i]    , 1.E-6 , -1. , -4. , 4.);
+	filter->AddTrigger(-1*charmPid[i] , 1.E-6 , -1. , -4. , 4.);
+	cout<<"YiSaid : add filter for particle "<<charmPid[i]<<endl;
     }
     _primary -> AddFilter( filter );
 
@@ -239,10 +256,12 @@ void myFilter(int saveMode) {
     //_primary->SetAttr("FilterSkipRejects", int(1) ); // enables event skipping 
     //chain->SetAttr(".Privilege",1,"StarPrimaryMaker::*" );
     //
+    cout<<"YiSaid : Init Filter done!!"<<endl;
 }
 
 // ----------------------------------------------------------------------------
 void myDecayer() {
+    cout<<"YiSaid : Init Decayer....."<<endl;
     //
     // Setup decay manager
     //
@@ -253,21 +272,24 @@ void myDecayer() {
     decayMgr->AddDecayer( 0, decayPy8 ); // Handle any decay requested 
     decayPy8->SetDebug(1);
     decayPy8->Set("WeakSingleBoson:all = on");
-
+    //decayPy8->Set("HardQCD:all=on");
+    //decayPy8->Set("TimeShower:alphaSvalue=0.18");
+    //decayPy8->Set("PhaseSpace:pTHatMin=1.3");
 
     // set decay channel for charmed meson
     TString name;
     for(int i=0; i<nc; i++) {
 	name.Form("%i:onMode = off", charmPid[i]);
 	decayPy8->Set(name.Data());
-	name.Form("%i:onIfAny = 11 -11", charmPid[i]);
+	name.Form("-%i:onMode = off", charmPid[i]);
 	decayPy8->Set(name.Data());
 
-	name.Form("-%i:onMode = off", charmPid[i]);
+	name.Form("%i:onIfAny = 11 -11", charmPid[i]);
 	decayPy8->Set(name.Data());
 	name.Form("-%i:onIfAny = 11 -11", charmPid[i]);
 	decayPy8->Set(name.Data());
     }
+    cout<<"YiSaid : Init Decayer done"<<endl;
 }
 // ----------------------------------------------------------------------------
 void myParticle() {
@@ -278,6 +300,8 @@ void myParticle() {
 // ----------------------------------------------------------------------------
 void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode = 0 , char* inPythia6File = "")
 { 
+    bool decayOutSidePythia = kTRUE;
+    bool doDalitz = kFALSE;
 
     gROOT->ProcessLine(".L bfc.C");
     {
@@ -336,55 +360,76 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     switch(mode) {
 	// Setup pythia 
 	case 0 :
-	    cout<<"Running at Pythia6 Standalone mode"<<endl; 
-	    myPythia6();
+	    cout<<"YiSaid : Running at Pythia6 Standalone mode"<<endl; 
+	    myPythia6(decayOutSidePythia);
 	    myFilter(0);
 	    break; 
 	    // Setup an event generator
 	case 1 : 
-	    cout<<"Running at Hijing+StarGenEventReader mode"<<endl;
+	    cout<<"YiSaid : Running at Hijing+StarGenEventReader mode"<<endl;
 	    TString infilename;
 	    infilename.Form(inPythia6File);
-	    Hijing();
 	    myEventReader(infilename);
-	    if(doDalitz)myKine();
-	    //myFilter(0);
+	    Hijing(decayOutSidePythia);
 	    break;
 	case 2 :
-	    cout<<"Running at Hijing+Pythia8 mode"<<endl;
-	    Hijing();
+	    cout<<"YiSaid : Running at Hijing+Pythia8 mode"<<endl;
+	    Hijing(0);
 	    myPythia8();
 	    break;
 	case 3 :
+	    cout<<"YiSaid : Running at Pythia8+StarGenEventReader mode"<<endl;
 	    myPythia8();
+	    TString infilename;
+	    infilename.Form(inPythia6File);
+	    myEventReader(infilename);
+	    break;
+	case 4 :
+	    cout<<"YiSaid : Running at Hijing Standalone mode"<<endl; 
+	    Hijing();
+	    break; 
+	case 5 : 
+	    cout<<"YiSaid : Running at Pythia6+StarGenEventReader mode"<<endl;
+	    TString infilename;
+	    infilename.Form(inPythia6File);
+	    myPythia6(decayOutSidePythia);
 	    myFilter(0);
+	    myEventReader(infilename);
 	    break;
 	default :
-	    cout<<"You must choose a mode!"<<endl;
+	    cout<<"YiSaid : You must choose a mode!"<<endl;
 	    cout<<"0 for Pythia6" << endl;
 	    cout<<"1 for Hijing+Pythia6 from a root file"<<endl;
 	    cout<<"2 for Hijing+Pythia8"<<endl;
-	    cout<<"3 for Pythia8"<<endl;
+	    cout<<"3 for test"<<endl;
 	    break;
     }
 
 
-    if(decayOutSidePythia){
+    if(decayOutSidePythia && mode != 0 && mode != 4){
+    //if(decayOutSidePythia){
 	myDecayer();
 	// Particle data
 	StarParticleData& data = StarParticleData::instance();
 	//  One can add a particle to G3 using...
-	data.AddParticleToG3( "MyD0"    , 0.1865E+01 , 0.42800E-12 , 0. , 3 , 421  , 37 , 0 , 0 );
-	data.AddParticleToG3( "MyD0bar" , 0.1865E+01 , 0.42800E-12 , 0. , 3 , -421 , 38 , 0 , 0 );
-	data.AddParticleToG3( "MyD+"    , 0.1870E+01 , 1.04000E-12 , 1  , 3 , 411  , 39 , 0 , 0 );
-	data.AddParticleToG3( "MyD-"    , 0.1870E+01 , 1.04000E-12 , -1 , 3 , -411 , 40 , 0 , 0 );
+	data.AddParticleToG3( "MyD+"    , 0.1870E+01 , 1.04000E-12 , 1  , 3 , 411   , 12037 , 0 , 0 );
+	data.AddParticleToG3( "MyD-"    , 0.1870E+01 , 1.04000E-12 , -1 , 3 , -411  , 12038 , 0 , 0 );
+	data.AddParticleToG3( "MyD0"    , 0.1865E+01 , 0.42800E-12 , 0. , 3 , 421   , 12039 , 0 , 0 );
+	data.AddParticleToG3( "MyD0bar" , 0.1865E+01 , 0.42800E-12 , 0. , 3 , -421  , 12040 , 0 , 0 );
+	data.AddParticleToG3( "MyDs+"   , 0.1968E+01 , 0.50000E-12 , 1  , 3 , 431   , 12041 , 0 , 0 );
+	data.AddParticleToG3( "MyDs-"   , 0.1968E+01 , 0.50000E-12 , -1 , 3 , -431  , 12042 , 0 , 0 );
+	data.AddParticleToG3( "MyLc+"   , 0.2286E+01 , 0.20000E-12 , 1  , 3 , 4122  , 12043 , 0 , 0 );
+	//data.AddParticleToG3( "MyLc-"   , 0.2286E+01 , 0.20000E-12 , -1 , 3 , -4122 , 12044 , 0 , 0 );
     }
 
 
     //
     // Initialize primary event generator and all sub makers
     //
+    //_primary -> SetCuts( 1.0E-6 , -1., -2.6, 2.6 );
     _primary -> Init();
+
+
 
     //
     // Setup geometry and set starsim to use agusread for input
@@ -392,7 +437,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //geometry("y2014");
     command("gkine -4 0");
     if(mode !=0 && mode !=3) command(fzname);
-    command(fzname);
+    //command(fzname);
 
     //Double_t pt0 = 3.0;
     //ptDist = new TF1("ptDist","(x/[0])/(1+(x/[0])^2)^6",0.0,10.0);

@@ -7,6 +7,7 @@ class StPicoEvent;
 class StPicoMcEvent;
 class StPicoTrack;
 class StPicoMcTrack;
+class StPicoMcVertex;
 class StPicoV0;
 class StPicoEmcTrigger;
 class StPicoMtdTrigger;
@@ -50,6 +51,8 @@ public:
   static StPicoMcEvent* mcevent() { return (StPicoMcEvent*)picoArrays[picoMcEvent]->UncheckedAt(0); }
   /// return pointer to i-th track 
   static StPicoTrack* track(int i) { return (StPicoTrack*)picoArrays[picoTrack]->UncheckedAt(i); }
+  /// return pointer to i-th mcvertex 
+  static StPicoMcVertex* mcvertex(int i) { return (StPicoMcVertex*)picoArrays[picoMcVertex]->UncheckedAt(i); }
   ///
   static StPicoMcTrack* mctrack(int i) { return (StPicoMcTrack*)picoArrays[picoMcTrack]->UncheckedAt(i); }
   /// return pointer to i-th trigger data
@@ -79,6 +82,7 @@ public:
 
   static unsigned int numberOfTracks() { return picoArrays[picoTrack]->GetEntries(); }
   static unsigned int numberOfMcTracks() { return picoArrays[picoMcTrack]->GetEntries(); }
+  static unsigned int numberOfMcVertices() { return picoArrays[picoMcVertex]->GetEntries(); }
   static unsigned int numberOfEmcTriggers() { return picoArrays[picoEmcTrigger]->GetEntries(); }
   static unsigned int numberOfBTOWHits() { return picoArrays[picoBTOWHit]->GetEntries(); }
   static unsigned int numberOfBTofHits() { return picoArrays[picoBTofHit]->GetEntries(); }
