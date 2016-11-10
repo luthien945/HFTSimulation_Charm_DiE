@@ -5,6 +5,7 @@
 #include "TTree.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TClonesArray.h"
 
 #include "StarClassLibrary/StThreeVectorF.hh"
 #include "StEvent/StDcaGeometry.h"
@@ -26,6 +27,7 @@ class StPicoMcEvent;
 class StPicoMcTrack;
 class StPicoMcVertex;
 class TString;
+class histClass;
 class StDcaGeometry;
 
 class StMyAnalysisMaker : public StMaker {
@@ -38,10 +40,14 @@ class StMyAnalysisMaker : public StMaker {
 	virtual void  Clear(Option_t *opt="");
 	virtual Int_t Finish();
     private:
+	void createArrays();
+	void clearArrays();
 	bool isGoodEvent();
 	int  loopMcTrack();
 	int  loopMcVertex();
 	int  getParent(StPicoMcTrack const * const mcTrk, bool doTraceUp);
+	int  getRcTrack(StPicoMcTrack const * const mcTrk);
+	int  mcFilterAndGharge(int gePid);
 
 	StPicoDstMaker * mPicoDstMaker;
 	StPicoDst      * mPicoDst;
@@ -49,16 +55,22 @@ class StMyAnalysisMaker : public StMaker {
 	StPicoMcEvent  * mPicoMcEvent;
 
 	TFile *mOutFile;
+	histClass *mHist;
 
 	StThreeVectorF pVtx;
 	float bField;
 	int nMcTracks;
 	int nRcTracks;
+	int nCharmMesons;
+	int nCharmElectrons;
 
 	std::vector<Int_t> rcEid;
 	std::vector<Int_t> rcPid;
 	std::vector<Int_t> mcEid;
 	std::vector<Int_t> mcPid;
+
+	TClonesArray *rcEP;
+	TClonesArray *rcEM;
 
 	ClassDef(StMyAnalysisMaker, 0)
 };

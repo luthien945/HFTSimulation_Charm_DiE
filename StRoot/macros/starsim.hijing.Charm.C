@@ -39,6 +39,9 @@ Float_t maxPt  = +5.0;
 Float_t minY   = -1.0;
 Float_t maxY   = +1.0;
 
+TH1F *hVx;
+TH1F *hVy;
+TH1F *hVz;
 
 // charmed meson id
 const int nc = 4;
@@ -59,15 +62,30 @@ void command( TString cmd )
     geant_maker -> Do( cmd );
 }
 // ----------------------------------------------------------------------------
-void vertex()
+void vertex(int i, int mode)
 {
     //z sampling 
-    double vz = -999.0;
-    while( std::fabs(vz) > 6.0 )
-	vz = StarRandom::Instance().gauss(vz_sig);
+    double vz = -999.;
+    double vx = -999.;
+    double vy = -999.;
+    if(mode ==0) {
+	while( std::fabs(vz) > 6.0 )
+	    vz = StarRandom::Instance().gauss(vz_sig);
 
-    double vx = StarRandom::Instance().gauss(vx_sig);
-    double vy = StarRandom::Instance().gauss(vy_sig);
+	vx = StarRandom::Instance().gauss(vx_sig);
+	vy = StarRandom::Instance().gauss(vy_sig);
+	hVx->SetBinContent(i+1,vx);
+	hVy->SetBinContent(i+1,vy);
+	hVz->SetBinContent(i+1,vz);
+    } else {
+	vx = hVx->GetBinContent(i+1);
+	vy = hVy->GetBinContent(i+1);
+	vz = hVz->GetBinContent(i+1);
+    }
+    cout<<"YiSaid : set vertex to ["
+	<<std::setw(5)<<vx<<" "
+	<<std::setw(5)<<vy<<" "
+	<<std::setw(5)<<vz<<"]"<<endl;
     _primary->SetVertex(vx,vy,vz);
     _primary->SetSigma ( 0, 0, 0);
 };
@@ -76,7 +94,7 @@ void trig( Int_t n=0, Int_t mode)
 {
     for ( Int_t i=1; i<n+1; i++ ) {
 	chain->Clear();
-	vertex();
+	vertex(i, mode);
 	//if(doFlag) kinematics->Dist(100, "pi0_Dalitz", ptDist_flat30, yDist);
 	//if(doFlag) kinematics->Dist(100, "eta_Dalitz", ptDist_flat30, yDist);
 	chain->Make();
@@ -338,6 +356,20 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    sprintf(fzname,"gfile o hijing_charm_%d.starsim.fzd",Index);
 	    break;
     }
+
+    char name[100];
+    if(mode ==0) {
+	hVx = new TH1F("hVx","",10,0,10);
+	hVy = new TH1F("hVy","",10,0,10);
+	hVz = new TH1F("hVz","",10,0,10);
+    } else {
+	sprintf(name,"vertex_%d.root",Index);
+	TFile *fVertex = TFile::Open(name);
+	hVx = (TH1F *)fVertex->Get("hVx");
+	hVy = (TH1F *)fVertex->Get("hVy");
+	hVz = (TH1F *)fVertex->Get("hVz");
+    }
+
     //
     // Create the primary event generator and insert it
     // before the geant maker
@@ -476,6 +508,14 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //  command("gprint kine");
 
     command("call agexit");  // Make sure that STARSIM exits properly
+
+    if(mode == 0) {
+	sprintf(name,"vertex_%d.root",Index);
+	TFile *fVertex = TFile::Open(name,"recreate");
+	hVx->Write();
+	hVy->Write();
+	hVz->Write();
+    }
 }
 // ----------------------------------------------------------------------------
 
