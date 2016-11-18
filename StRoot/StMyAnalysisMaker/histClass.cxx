@@ -23,10 +23,6 @@ histClass::histClass(TFile *outFile)
 }
 
 histClass::~histClass() {
-    if(mFile) {
-	mFile->Close();
-	delete mFile;
-    }
     if(mList) {
 	deleteHist();
 	delete mList;
@@ -34,6 +30,7 @@ histClass::~histClass() {
 }
 
 int histClass::initHist() {
+    mFile->cd();
     double PI = TMath::Pi();
     mList = new TList();
 
@@ -52,6 +49,11 @@ int histClass::initHist() {
     hPid_GenIdVsCharmPid    = new TH2F("hPid_GenIdVsCharmPid"    , "" , 50  , 0     , 50      , 20  , 12030 , 12050 );
     hPid_CharmPid           = new TH1F("hPid_CharmPid"           , "" , 20  , 12030 , 12050                         );
     hPid_GenIdPrimary       = new TH1F("hPid_GenIdPrimary"       , "" , 200 , 0     , 200                           );
+    hDecayLMcVsP_charm      = new TH2F("hDecayLMcVsP_charm"      , "" , 200 , 0     , 0.05    , 200 , 0     , 6     );
+    hDecayLMcVsP_meson      = new TH2F("hDecayLMcVsP_meson"      , "" , 200 , 0     , 0.05    , 200 , 0     , 6     );
+
+    hParDisCharm            = new TH2F("hParDisCharm"            , "" , 200 , 0     , 0.05    , 6   , 0     ,6      );
+    hParDisMeson            = new TH2F("hParDisMeson"            , "" , 200 , 0     , 0.05    , 6   , 0     ,6      );
 
     hRc_DcaVsPt    = new TH2F("hRc_DcaVsPt"    , "" , 500 , -0.25, 0.25 , 200 , 0    , 6.   );
     hRc_DcaVsPhi   = new TH2F("hRc_DcaVsPhi"   , "" , 500 , -0.25, 0.25 , 360 , 0    , 2*PI );
@@ -62,6 +64,8 @@ int histClass::initHist() {
     hRc_DcaZVsPt   = new TH2F("hRc_DcaZVsPt"   , "" , 500 , -0.25, 0.25 , 200 , 0    , 6.   );
     hRc_DcaZVsPhi  = new TH2F("hRc_DcaZVsPhi"  , "" , 500 , -0.25, 0.25 , 360 , 0    , 2*PI );
     hRc_DcaZVsEta  = new TH2F("hRc_DcaZVsEta"  , "" , 500 , -0.25, 0.25 , 240 , -1.2 , 1.2  );
+
+    hPtVsDiffPt    = new TH2F("hPtVsDiffPt"    , "" , 200 , 0, 4., 200, -0.5, 0.5);
 
     hRc_HFTMatched_DcaVsPt    = new TH2F("hRc_HFTMatched_DcaVsPt"    , "" , 500 , -0.25, 0.25 , 200 , 0    , 6.   );
     hRc_HFTMatched_DcaXYVsPt  = new TH2F("hRc_HFTMatched_DcaXYVsPt"  , "" , 500 , -0.25, 0.25 , 200 , 0    , 6.   );
@@ -89,21 +93,21 @@ int histClass::initHist() {
     hRc_charm_PtVsHFTMatch  = new TH2F("hRc_charm_PtVsHFTMatch"  , "" , 300 , 0    , 6.  , 8   , 0 , 8    );
 
 
-    hRc_incl_DcaVsPt    = new TH2F("hRc_incl_DcaVsPt"    , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hRc_incl_DcaXYVsPt  = new TH2F("hRc_incl_DcaXYVsPt"  , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hRc_incl_DcaZVsPt   = new TH2F("hRc_incl_DcaZVsPt"   , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
+    hRc_incl_DcaVsPt    = new TH2F("hRc_incl_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hRc_incl_DcaXYVsPt  = new TH2F("hRc_incl_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hRc_incl_DcaZVsPt   = new TH2F("hRc_incl_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
 
-    hMc_incl_DcaVsPt    = new TH2F("hMc_incl_DcaVsPt"    , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hMc_incl_DcaXYVsPt  = new TH2F("hMc_incl_DcaXYVsPt"  , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hMc_incl_DcaZVsPt   = new TH2F("hMc_incl_DcaZVsPt"   , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
+    hMc_incl_DcaVsPt    = new TH2F("hMc_incl_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hMc_incl_DcaXYVsPt  = new TH2F("hMc_incl_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hMc_incl_DcaZVsPt   = new TH2F("hMc_incl_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
 
-    hRc_charm_DcaVsPt    = new TH2F("hRc_charm_DcaVsPt"    , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hRc_charm_DcaXYVsPt  = new TH2F("hRc_charm_DcaXYVsPt"  , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hRc_charm_DcaZVsPt   = new TH2F("hRc_charm_DcaZVsPt"   , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
+    hRc_charm_DcaVsPt    = new TH2F("hRc_charm_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hRc_charm_DcaXYVsPt  = new TH2F("hRc_charm_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hRc_charm_DcaZVsPt   = new TH2F("hRc_charm_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
 
-    hMc_charm_DcaVsPt    = new TH2F("hMc_charm_DcaVsPt"    , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hMc_charm_DcaXYVsPt  = new TH2F("hMc_charm_DcaXYVsPt"  , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
-    hMc_charm_DcaZVsPt   = new TH2F("hMc_charm_DcaZVsPt"   , "" , 500 , -1. , 1. , 200 , 0    , 6.   );
+    hMc_charm_DcaVsPt    = new TH2F("hMc_charm_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hMc_charm_DcaXYVsPt  = new TH2F("hMc_charm_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hMc_charm_DcaZVsPt   = new TH2F("hMc_charm_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
 
     if(!mList) cout<<"no list"<<endl;
 
@@ -122,6 +126,10 @@ int histClass::initHist() {
     mList->Add(hPid_GenIdPrimary      );
     mList->Add(hPid_GenIdVsCharmPid   );
     mList->Add(hPid_CharmPid          );
+    mList->Add(hDecayLMcVsP_charm     );
+    mList->Add(hDecayLMcVsP_meson     );
+    mList->Add(hParDisCharm           );
+    mList->Add(hParDisMeson           );
 
     mList->Add(hRc_DcaVsPt   );
     mList->Add(hRc_DcaVsPhi  );
@@ -132,6 +140,7 @@ int histClass::initHist() {
     mList->Add(hRc_DcaZVsPt  );
     mList->Add(hRc_DcaZVsPhi );
     mList->Add(hRc_DcaZVsEta );
+    mList->Add(hPtVsDiffPt   );
 
     mList->Add(hRc_HFTMatched_DcaVsPt  );
     mList->Add(hRc_HFTMatched_DcaXYVsPt);

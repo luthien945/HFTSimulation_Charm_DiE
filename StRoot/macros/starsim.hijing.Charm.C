@@ -47,6 +47,9 @@ TH1F *hVz;
 const int nc = 4;
 const int charmPid[nc] = {411,421,431,4122}; // D+, D0,Ds,L_c
 
+const int nh = 4;
+const int mesonPid[nh] = {111, 221, 223, 333}; // pi0, eta, omega, phi
+
 // ----------------------------------------------------------------------------
 void geometry( TString tag, Bool_t agml=true )
 {
@@ -69,18 +72,15 @@ void vertex(int i, int mode)
     double vx = -999.;
     double vy = -999.;
     if(mode ==0) {
+	vx = 0;
+	vy = 0;
+	vz = 0;
+    } else {
 	while( std::fabs(vz) > 6.0 )
 	    vz = StarRandom::Instance().gauss(vz_sig);
 
 	vx = StarRandom::Instance().gauss(vx_sig);
 	vy = StarRandom::Instance().gauss(vy_sig);
-	hVx->SetBinContent(i+1,vx);
-	hVy->SetBinContent(i+1,vy);
-	hVz->SetBinContent(i+1,vz);
-    } else {
-	vx = hVx->GetBinContent(i+1);
-	vy = hVy->GetBinContent(i+1);
-	vz = hVz->GetBinContent(i+1);
     }
     cout<<"YiSaid : set vertex to ["
 	<<std::setw(5)<<vx<<" "
@@ -180,6 +180,12 @@ void myPythia6(bool mode = kFALSE)
     if(mode) {
 	// use an outside decayer
 	// turn off the decays in pythia
+
+	pydat3.mdcy(102, 1) = 0; // pi0 (111)
+	pydat3.mdcy(109, 1) = 0; // eta (221)
+	pydat3.mdcy(110, 1) = 0; // omega (223)
+	pydat3.mdcy(120, 1) = 0; // phi (333)
+
 	pydat3.mdcy(122, 1) = 0; // D0 (411)
 	pydat3.mdcy(125, 1) = 0; // D+ (421)
 	pydat3.mdcy(128, 1) = 0; // Ds (431)
@@ -221,7 +227,7 @@ void Hijing(bool decayMode = kFALSE)
     hijing->hiparnt().hipr1(10) = 2.0;  //    pT jet
     hijing->hiparnt().ihpr2(8)  = 10;   // Max number of jets / nucleon
     hijing->hiparnt().ihpr2(11) = 1;    // Set baryon production
-    hijing->hiparnt().ihpr2(12) = 0;    // Turn on/off decay of particles [1=recommended]
+    hijing->hiparnt().ihpr2(12) = 1;    // Turn on/off decay of particles [1=recommended]
     hijing->hiparnt().ihpr2(18) = 1;    // Turn on/off B production
     hijing->hiparnt().hipr1(7) = 5.35;  // Set B production ???? Not really used... Really ????
 
@@ -248,13 +254,14 @@ void Hijing(bool decayMode = kFALSE)
 void myFilter(int saveMode) {
     cout<<"YiSaid : Init Filter....."<<endl;
     gSystem->Load( "StarGeneratorFilt.so" );
-    StarParticleFilter *filter = new StarParticleFilter();
+    //StarParticleFilter *filter = new StarParticleFilter();
+    StarFilterMaker *filter = new StCharmEventFilter();
 
-    for(int i=0;i<nc;i++) {
-	filter->AddTrigger(charmPid[i]    , 1.E-6 , -1. , -4. , 4.);
-	filter->AddTrigger(-1*charmPid[i] , 1.E-6 , -1. , -4. , 4.);
-	cout<<"YiSaid : add filter for particle "<<charmPid[i]<<endl;
-    }
+    //for(int i=0;i<nc;i++) {
+    //    filter->AddTrigger(charmPid[i]    , 1.E-6 , -1. , -1.5 , 1.5);
+    //    filter->AddTrigger(-1*charmPid[i] , 1.E-6 , -1. , -1.5 , 1.5);
+    //    cout<<"YiSaid : add filter for particle "<<charmPid[i]<<endl;
+    //}
     _primary -> AddFilter( filter );
 
     // If set to 1, tracks will be saved in the tree on events which were
@@ -307,6 +314,19 @@ void myDecayer() {
 	name.Form("-%i:onIfAny = 11 -11", charmPid[i]);
 	decayPy8->Set(name.Data());
     }
+
+    TString name;
+    for(int i=0; i<nh; i++) {
+	name.Form("%i:onMode = off", mesonPid[i]);
+	decayPy8->Set(name.Data());
+	name.Form("-%i:onMode = off", mesonPid[i]);
+	decayPy8->Set(name.Data());
+
+	name.Form("%i:onIfAny = 11 -11", mesonPid[i]);
+	decayPy8->Set(name.Data());
+	name.Form("-%i:onIfAny = 11 -11", mesonPid[i]);
+	decayPy8->Set(name.Data());
+    }
     cout<<"YiSaid : Init Decayer done"<<endl;
 }
 // ----------------------------------------------------------------------------
@@ -357,19 +377,6 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    break;
     }
 
-    char name[100];
-    if(mode ==0) {
-	hVx = new TH1F("hVx","",10,0,10);
-	hVy = new TH1F("hVy","",10,0,10);
-	hVz = new TH1F("hVz","",10,0,10);
-    } else {
-	sprintf(name,"vertex_%d.root",Index);
-	TFile *fVertex = TFile::Open(name);
-	hVx = (TH1F *)fVertex->Get("hVx");
-	hVy = (TH1F *)fVertex->Get("hVy");
-	hVz = (TH1F *)fVertex->Get("hVz");
-    }
-
     //
     // Create the primary event generator and insert it
     // before the geant maker
@@ -409,25 +416,25 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    Hijing(0);
 	    myPythia8();
 	    break;
-	case 3 :
-	    cout<<"YiSaid : Running at Pythia8+StarGenEventReader mode"<<endl;
-	    myPythia8();
-	    TString infilename;
-	    infilename.Form(inPythia6File);
-	    myEventReader(infilename);
-	    break;
-	case 4 :
-	    cout<<"YiSaid : Running at Hijing Standalone mode"<<endl; 
-	    Hijing();
-	    break; 
-	case 5 : 
-	    cout<<"YiSaid : Running at Pythia6+StarGenEventReader mode"<<endl;
-	    TString infilename;
-	    infilename.Form(inPythia6File);
-	    myPythia6(decayOutSidePythia);
-	    myFilter(0);
-	    myEventReader(infilename);
-	    break;
+	//case 3 :
+	//    cout<<"YiSaid : Running at Pythia8+StarGenEventReader mode"<<endl;
+	//    myPythia8();
+	//    TString infilename;
+	//    infilename.Form(inPythia6File);
+	//    myEventReader(infilename);
+	//    break;
+	//case 4 :
+	//    cout<<"YiSaid : Running at Hijing Standalone mode"<<endl; 
+	//    Hijing();
+	//    break; 
+	//case 5 : 
+	//    cout<<"YiSaid : Running at Pythia6+StarGenEventReader mode"<<endl;
+	//    TString infilename;
+	//    infilename.Form(inPythia6File);
+	//    myPythia6(decayOutSidePythia);
+	//    myFilter(0);
+	//    myEventReader(infilename);
+	//    break;
 	default :
 	    cout<<"YiSaid : You must choose a mode!"<<endl;
 	    cout<<"0 for Pythia6" << endl;
@@ -451,10 +458,12 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	data.AddParticleToG3( "MyDs+"   , 0.1968E+01 , 0.50000E-12 , 1  , 3 , 431   , 12041 , 0 , 0 );
 	data.AddParticleToG3( "MyDs-"   , 0.1968E+01 , 0.50000E-12 , -1 , 3 , -431  , 12042 , 0 , 0 );
 	data.AddParticleToG3( "MyLc+"   , 0.2286E+01 , 0.20000E-12 , 1  , 3 , 4122  , 12043 , 0 , 0 );
-	//data.AddParticleToG3( "MyLc-"   , 0.2286E+01 , 0.20000E-12 , -1 , 3 , -4122 , 12044 , 0 , 0 );
+
+	data.AddParticleToG3( "MyPi0" , 0.134 , 8.52000E-17 , 0  , 3 , 111 , 12137 , 0 , 0 );
+	data.AddParticleToG3( "MyEta" , 0.547 , 5.00000E-19 , 0  , 3 , 221 , 12138 , 0 , 0 );
+	data.AddParticleToG3( "MyOme" , 0.782 , 7.75000E-23 , 0. , 3 , 223 , 12139 , 0 , 0 );
+	data.AddParticleToG3( "MyPhi" , 1.020 , 1.54000E-22 , 0. , 3 , 333 , 12140 , 0 , 0 );
     }
-
-
     //
     // Initialize primary event generator and all sub makers
     //
@@ -509,13 +518,6 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 
     command("call agexit");  // Make sure that STARSIM exits properly
 
-    if(mode == 0) {
-	sprintf(name,"vertex_%d.root",Index);
-	TFile *fVertex = TFile::Open(name,"recreate");
-	hVx->Write();
-	hVy->Write();
-	hVz->Write();
-    }
 }
 // ----------------------------------------------------------------------------
 

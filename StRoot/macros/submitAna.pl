@@ -13,7 +13,7 @@ my $Dir = Cwd::cwd();
 my $submit = "/scheduler/submit"; 
 $Dir =~ s/$submit//;
 print "my Dir: $Dir\n";
-my $Simu = $Dir."/Simu_out/*/*.picoDst.root";
+my $Simu = $Dir."/Simu_out/PicoDst_Run*/*.picoDst.root";
 my $OutDir = $Dir."/scheduler/output";
 $glb = $Simu;
 print "Macro : $macro\n";
@@ -80,7 +80,7 @@ foreach my $file (@Files){
 }
 # write the last list
 open CSH ,">$csh";
-my $cmdline = "$macro $LISTNAME $OutName $mEnergy>& $log";
+my $cmdline = "root.exe -b -l \'$macro(\"$LISTNAME\",\"$OutName\")\'>& $log";
 print "$cmdline\n";
 print CSH "#!/bin/tcsh \n";
 print CSH "starver $STAR_LEVEL\n";

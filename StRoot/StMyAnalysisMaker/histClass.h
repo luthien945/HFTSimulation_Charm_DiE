@@ -37,6 +37,12 @@ class histClass {
 	TH2F *hPid_GenIdVsCharmPid;
 	TH1F *hPid_CharmPid;
 
+	TH2F *hParDisCharm;
+	TH2F *hParDisMeson;
+
+	TH2F *hDecayLMcVsP_charm;
+	TH2F *hDecayLMcVsP_meson;
+
 	TH2F *hRc_DcaVsPt;
 	TH2F *hRc_DcaVsPhi;
 	TH2F *hRc_DcaVsEta;
@@ -64,6 +70,8 @@ class histClass {
 	TH2F *hRc_HFTMatched_DcaVsPt   ;
 	TH2F *hRc_HFTMatched_DcaXYVsPt ;
 	TH2F *hRc_HFTMatched_DcaZVsPt  ;
+
+	TH2F *hPtVsDiffPt ;
 
 	// HFT match test
 	TH2F *hMc_PtVsPhi;

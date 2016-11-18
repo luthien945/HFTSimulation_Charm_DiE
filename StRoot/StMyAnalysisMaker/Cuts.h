@@ -24,14 +24,19 @@ namespace cuts
     int const nHitsFit = 20;
     float const ptMin = .2;
     float const ptMax = 20.;
-    float const eta = 0.5;
+    float const eta = 1.;
+
+    const float massE = 0.000511;
     
     // set Geant Id
     UShort_t parentGid = Pico::USHORTMAX;
     UShort_t dau1Gid = 2;
     UShort_t dau2Gid = 3;
-    UShort_t parentGidCut1 = 12037; 
+    UShort_t parentGidCut1 = 12037; // charm 
     UShort_t parentGidCut2 = 12043;
+
+    UShort_t parentGidHCut1 = 12137; // meson
+    UShort_t parentGidHCut2 = 12140;
 
 }
 #endif

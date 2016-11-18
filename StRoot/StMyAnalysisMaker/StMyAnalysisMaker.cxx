@@ -4,6 +4,7 @@
 #include "TString.h"
 #include "StThreeVectorF.hh"
 #include "StLorentzVectorF.hh"
+#include "TLorentzVector.h"
 #include "../StPicoDstMaker/StPicoDst.h"
 #include "../StPicoDstMaker/StPicoDstMaker.h"
 #include "../StPicoDstMaker/StPicoEvent.h"
@@ -33,8 +34,10 @@ Int_t StMyAnalysisMaker::Init() {
     if(!mOutFile && !mOutFile->IsOpen()) {
 	cout<<"No output file!!!"<<endl;
     }
+    mOutFile->cd();
     mHist = new histClass(mOutFile);
     mHist->initHist();
+    initTree();
     createArrays();
     return kStOK;
 }
@@ -45,6 +48,7 @@ void StMyAnalysisMaker::Clear(Option_t *opt) {
     mPicoMcEvent = NULL;
     nCharmMesons = 0;
     nCharmElectrons = 0;
+    nPairs = 0;
 
     clearArrays();
     rcEid.clear();
@@ -82,14 +86,26 @@ Int_t StMyAnalysisMaker::Make() {
     if(nCharmElectrons>=1) mHist->hEvtCounter->Fill(6);
     if(nCharmElectrons>=2) mHist->hEvtCounter->Fill(7);
     if(nCharmElectrons>=3) mHist->hEvtCounter->Fill(8);
+    makePair();
     //loopMcVertex();
+
+    mPairDst->nPairs = nPairs;
+    mPairDst->BField = bField;
+
+    mTree->Fill();
 
     return kStOK;
 }
 
 Int_t StMyAnalysisMaker::Finish() {
-    mHist->writeHist();
+    //mHist->writeHist();
+    if(mOutFile) {
+	mOutFile->Write();
+	mOutFile->Close();
+    }
     if(mHist) delete mHist;
+    //if(mTree) delete mTree;
+    if(mPairDst) delete mPairDst;
     if(rcEP) delete rcEP;
     if(rcEM) delete rcEM;
     return kStOK;
@@ -108,6 +124,56 @@ void StMyAnalysisMaker::clearArrays() {
     rcEP->Clear();
     rcEM->Clear();
 }
+
+void StMyAnalysisMaker::initTree() {
+    mOutFile->cd();
+    mTree = new TTree("mPairDst", "mPairDst");
+    mPairDst = new epPair();
+
+    // nPairs
+    mPairDst->decayL       = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->dcaV0        = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->dcaPair      = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->mcPairM      = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->pairM        = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->openAngle    = new float   [MAX_N_PAIR]; //[nPairs]
+
+    mPairDst->gePid1       = new UShort_t[MAX_N_PAIR]; //[nPairs]
+    mPairDst->parentPid1   = new UShort_t[MAX_N_PAIR]; //[nPairs]
+    mPairDst->parentId1    = new UShort_t[MAX_N_PAIR]; //[nPairs]
+    mPairDst->pP1x         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->pP1y         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->pP1z         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->gP1x         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->gP1y         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->gP1z         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->dca1XY       = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->dca1Z        = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->idtrue1_pxl1 = new bool    [MAX_N_PAIR]; //[nPairs]
+    mPairDst->idtrue1_pxl2 = new bool    [MAX_N_PAIR]; //[nPairs]
+    mPairDst->idtrue1_ist  = new bool    [MAX_N_PAIR]; //[nPairs]
+    mPairDst->hftHitMap1   = new int     [MAX_N_PAIR]; //[nPairs]
+
+    mPairDst->gePid2       = new UShort_t[MAX_N_PAIR]; //[nPairs]
+    mPairDst->parentPid2   = new UShort_t[MAX_N_PAIR]; //[nPairs]
+    mPairDst->parentId2    = new UShort_t[MAX_N_PAIR]; //[nPairs]
+    mPairDst->pP2x         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->pP2y         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->pP2z         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->gP2x         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->gP2y         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->gP2z         = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->dca2XY       = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->dca2Z        = new float   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->idtrue2_pxl1 = new bool    [MAX_N_PAIR]; //[nPairs]
+    mPairDst->idtrue2_pxl2 = new bool    [MAX_N_PAIR]; //[nPairs]
+    mPairDst->idtrue2_ist  = new bool    [MAX_N_PAIR]; //[nPairs]
+    mPairDst->hftHitMap2   = new int     [MAX_N_PAIR]; //[nPairs]
+
+    mTree->Branch("mPairDst", &mPairDst);
+    mTree->SetAutoSave(10000);
+}
+
 
 bool StMyAnalysisMaker::isGoodEvent()
 {
@@ -138,7 +204,8 @@ bool StMyAnalysisMaker::isGoodEvent()
 int StMyAnalysisMaker::loopMcTrack() {
     nMcTracks = mPicoDst->numberOfMcTracks();
 
-    //cout<<"Number of mctracks : "<<nMcTracks<<endl;
+    cout<<"Number of mctracks : "<<nMcTracks<<endl;
+    cout<<"Number of rctracks : "<<mPicoDst->numberOfTracks()<<endl;
     for(int itMc=0; itMc<nMcTracks; itMc++) {
 	StPicoMcTrack *mcTrk = (StPicoMcTrack*) mPicoDst->mctrack(itMc);
 	StThreeVectorF startVertex = mcTrk->Origin();
@@ -152,17 +219,35 @@ int StMyAnalysisMaker::loopMcTrack() {
 
 	int parentGeId = -999;
 	int ancestorGeId = -999;
+	float parDis = 0; 
 	if(parentId>=0 && parentId<=Pico::USHORTMAX) {
 	    StPicoMcTrack *mcParentTrk = (StPicoMcTrack*) mPicoDst->mctrack(parentId);
+	    StThreeVectorF momPar = mcParentTrk->Mom();
+	    StThreeVectorF vPar = mcParentTrk->Origin();
+	    StThreeVectorF diff = startVertex-vPar;
 	    parentGeId = mcParentTrk->GePid();
+	    parDis = (vPar-pVtxMc).mag();
+	    if(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2) {
+		if(gePid == 2 || gePid == 3) {
+		    mHist->hDecayLMcVsP_charm->Fill(diff.mag(), momPar.mag());
+		    mHist->hParDisCharm->Fill(parDis, parentGeId-cuts::parentGidCut1);
+		}
+	    }
+	    if(parentGeId>=cuts::parentGidHCut1 && parentGeId<=cuts::parentGidHCut2) {
+		if(gePid == 2 || gePid == 3) {
+		    mHist->hDecayLMcVsP_meson->Fill(diff.mag(), momPar.mag());
+		    mHist->hParDisMeson->Fill(parDis, parentGeId-cuts::parentGidHCut1);
+		}
+	    }
 	}
+	if(parDis>0.001) continue; // primary parents
 
 	if(ancestorId>=0 && ancestorId<=Pico::USHORTMAX) {
 	    StPicoMcTrack *mcAncestorTrk = (StPicoMcTrack*) mPicoDst->mctrack(ancestorId);
 	    ancestorGeId = mcAncestorTrk->GePid();
 	}
 
-	if(gePid>=12037 && gePid<=12044) {
+	if(gePid>=cuts::parentGidCut1 && gePid<=cuts::parentGidCut2) {
 	    mHist->hPid_CharmPid->Fill(gePid);
 	    //cout<<"Charmed : "<<gePid<<endl;
 	    nCharmMesons++;
@@ -189,14 +274,18 @@ int StMyAnalysisMaker::loopMcTrack() {
 	int   mcNhitsTpc = mcTrk->hitsTpc();
 
 	bool isGoodMcTrack = mcPt>cuts::ptMin && fabs(mcEta)<1. && mcNhitsTpc>20 ;
-	if(isGoodMcTrack) {
-	    StPhysicalHelixD mcHelix(mcMom, mcOrigin, bField, mcCharge);
-	    StThreeVectorF mcDcaPoint = mcHelix.at(mcHelix.pathLength(pVtx.x(), pVtx.y()));
-	    double mcDcaZ  = mcDcaPoint.z()-pVtx.z();
-	    double mcDcaXY = mcHelix.geometricSignedDistance(pVtx.x(), pVtx.y());
-	    double mcDca   = TMath::Sqrt(mcDcaZ*mcDcaZ+mcDcaXY*mcDcaXY);
-	    mcDca *= mcDcaXY>=0 ? 1. : -1.;
+	StPhysicalHelixD mcHelix(mcMom, mcOrigin, bField, mcCharge);
+	StThreeVectorF mcDcaPoint = mcHelix.at(mcHelix.pathLength(pVtx.x(), pVtx.y()));
+	double mcDcaZ  = mcDcaPoint.z()-pVtx.z();
+	double mcDcaXY = mcHelix.geometricSignedDistance(pVtx.x(), pVtx.y());
+	double mcDca   = TMath::Sqrt(mcDcaZ*mcDcaZ+mcDcaXY*mcDcaXY);
+	mcDca *= mcDcaXY>=0 ? 1. : -1.;
 
+	bool mcPxl1 = mcTrk->hitsPxl1()>0;
+	bool mcPxl2 = mcTrk->hitsPxl2()>0;
+	bool mcIst  = mcTrk->hitsIst()>0;
+
+	if(isGoodMcTrack) {
 	    if(!(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2)) {
 		mHist->hMc_DcaXYVsPt->Fill(mcDcaXY, mcPt);
 		mHist->hMc_DcaZVsPt->Fill(mcDcaZ, mcPt);
@@ -204,9 +293,6 @@ int StMyAnalysisMaker::loopMcTrack() {
 
 		mHist->hMc_PtVsPhi->Fill(mcPt*mcCharge, mcPhi0);
 		mHist->hMc_EtaVsPhi->Fill(mcEta, mcPhi0);
-		bool mcPxl1 = mcTrk->hitsPxl1()>0;
-		bool mcPxl2 = mcTrk->hitsPxl2()>0;
-		bool mcIst  = mcTrk->hitsIst()>0;
 
 		mHist->hMc_PtVsHFTMatch->Fill(mcPt, 0);
 		if(mcPxl1) mHist->hMc_PtVsHFTMatch->Fill(mcPt,1);
@@ -215,105 +301,127 @@ int StMyAnalysisMaker::loopMcTrack() {
 	    }
 
 	    if(gePid == 2 || gePid == 3) {
-		mHist->hMc_incl_DcaXYVsPt->Fill(mcDcaXY, mcPt);
-		mHist->hMc_incl_DcaZVsPt->Fill(mcDcaZ, mcPt);
-		mHist->hMc_incl_DcaVsPt->Fill(mcDca, mcPt);
 		if(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2) {
 		    nCharmElectrons++;
 		    mHist->hMc_charm_DcaXYVsPt->Fill(mcDcaXY, mcPt);
 		    mHist->hMc_charm_DcaZVsPt->Fill(mcDcaZ, mcPt);
 		    mHist->hMc_charm_DcaVsPt->Fill(mcDca, mcPt);
 		}
+		if(parentGeId>=cuts::parentGidHCut1 && parentGeId<=cuts::parentGidHCut2) {
+		    mHist->hMc_incl_DcaXYVsPt->Fill(mcDcaXY, mcPt);
+		    mHist->hMc_incl_DcaZVsPt->Fill(mcDcaZ, mcPt);
+		    mHist->hMc_incl_DcaVsPt->Fill(mcDca, mcPt);
+		}
 	    }
 	}
 
 	int nTpcCommonHits = mcTrk->tpcCommon();
 	int rcIndex = getRcTrack(mcTrk);
+	StThreeVectorF rcGMom(0, 0, 0);
+	StThreeVectorF rcPMom(0, 0, 0);
+	float rcDcaZ = -999;
+	float rcDcaXY = -999;
+	float rcDca = -999;
 
-	if(rcIndex<=0) continue;
-	StPicoTrack *rcTrk = (StPicoTrack *) mPicoDst->track(rcIndex);
-	StThreeVectorF rcGMom = rcTrk->gMom(pVtx, bField);
-	StThreeVectorF rcPMom = rcTrk->pMom();
-	float rcPt        = rcPMom.perp();
-	float rcEta       = rcPMom.pseudoRapidity();
-	float rcPhi       = rcPMom.phi();
+	int   nHitsMapHFT = 0; 
+	bool  rcPxl1      = kFALSE; 
+	bool  rcPxl2      = kFALSE;
+	bool  rcIst       = kFALSE;
 
-	float rcGPt       = rcGMom.perp();
-	float rcGEta      = rcGMom.pseudoRapidity();
-	float rcGPhi      = rcGMom.phi();
+	if(rcIndex>=0 && rcIndex<Pico::USHORTMAX) {
+	    StPicoTrack *rcTrk = (StPicoTrack *) mPicoDst->track(rcIndex);
+	    rcGMom = rcTrk->gMom(pVtx, bField);
+	    rcPMom = rcTrk->pMom();
+	    float rcPt        = rcPMom.perp();
+	    float rcEta       = rcPMom.pseudoRapidity();
+	    float rcPhi       = rcPMom.phi();
 
-	float rcPhi0      = rcPhi + (rcPhi<0 ? 2*TMath::Pi() : 0);
+	    float rcGPt       = rcGMom.perp();
+	    float rcGEta      = rcGMom.pseudoRapidity();
+	    float rcGPhi      = rcGMom.phi();
 
-	int   nHitsTpc    = rcTrk->nHitsFit();
-	int   nHitsMapHFT = rcTrk->nHitsMapHFT();
-	int   rcCharge    = rcTrk->charge();
-	bool  rcPxl1      = nHitsMapHFT>>0 & 0x1;
-	bool  rcPxl2      = nHitsMapHFT>>1 & 0x3;
-	bool  rcIst       = nHitsMapHFT>>3 & 0x3;
-	if(rcCharge == 0) continue;
+	    float rcPhi0      = rcPhi + (rcPhi<0 ? 2*TMath::Pi() : 0);
+	    float rcGPhi0     = rcGPhi + (rcGPhi<0 ? 2*TMath::Pi() : 0);
 
-	bool isGoodRcTrack = rcPt>cuts::ptMin && fabs(rcEta)<1. && nTpcCommonHits>10
-	    && nHitsTpc>20;
+	    int   nHitsTpc    = rcTrk->nHitsFit();
+	    int   rcCharge    = rcTrk->charge();
 
-	if(isGoodRcTrack) {
+
+	    nHitsMapHFT = rcTrk->nHitsMapHFT();
+	    rcPxl1      = nHitsMapHFT>>0 & 0x1;
+	    rcPxl2      = nHitsMapHFT>>1 & 0x3;
+	    rcIst       = nHitsMapHFT>>3 & 0x3;
+
+	    //if(rcCharge == 0) continue;
+
 	    StPhysicalHelixD rcHelix = rcTrk->dcaGeometry().helix();
 
 	    StThreeVectorF rcDcaPoint = rcHelix.at(rcHelix.pathLength(pVtx.x(), pVtx.y()));
-	    double rcDcaZ  = rcDcaPoint.z()-pVtx.z();
-	    double rcDcaXY = rcHelix.geometricSignedDistance(pVtx.x(), pVtx.y());
-	    double rcDca   = TMath::Sqrt(rcDcaZ*rcDcaZ+rcDcaXY*rcDcaXY);
+	    rcDcaZ  = rcDcaPoint.z()-pVtx.z();
+	    rcDcaXY = rcHelix.geometricSignedDistance(pVtx.x(), pVtx.y());
+	    rcDca   = TMath::Sqrt(rcDcaZ*rcDcaZ+rcDcaXY*rcDcaXY);
 	    rcDca *= rcDcaXY>=0 ? 1. : -1.;
 
+	    //bool isGoodRcTrack = rcPt>cuts::ptMin && fabs(rcEta)<1. && nTpcCommonHits>10 && nHitsTpc>20;
+	    bool isGoodRcTrack = isGoodTrack(rcTrk);
+	    bool isHFTM = rcPxl1 && rcPxl2 && rcIst;
+
+	    if(isGoodRcTrack) {
+		mHist->hPtVsDiffPt->Fill(rcPt, (rcPt-mcPt)/rcPt);
+		if(!(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2) && gePid != 2 && gePid != 3) {
+		    mHist->hRc_DcaXYVsPt->Fill(rcDcaXY, rcGPt);
+		    mHist->hRc_DcaZVsPt->Fill(rcDcaZ, rcGPt);
+		    mHist->hRc_DcaVsPt->Fill(rcDca, rcGPt);
+
+		    mHist->hRc_PtVsPhi->Fill(rcGPt*rcCharge, rcGPhi0);
+		    mHist->hRc_EtaVsPhi->Fill(rcGEta, rcGPhi0);
+
+		    mHist->hRc_PtVsHFTMatch->Fill(rcGPt, 0);
+		    if(rcPxl1) mHist->hRc_PtVsHFTMatch->Fill(rcGPt,1);
+		    if(rcPxl1 && rcPxl2) mHist->hRc_PtVsHFTMatch->Fill(rcGPt, 2);
+		    if(rcPxl1 && rcPxl2 && rcIst) {
+			mHist->hRc_PtVsHFTMatch->Fill(rcGPt, 3);
+			mHist->hRc_HFTMatched_PtVsPhi->Fill(rcGPt*rcCharge, rcGPhi0);
+			mHist->hRc_HFTMatched_EtaVsPhi->Fill(rcGEta, rcGPhi0);
+
+			mHist->hRc_HFTMatched_DcaVsPt->Fill(rcDca, rcGPt);  
+			mHist->hRc_HFTMatched_DcaXYVsPt->Fill(rcDcaXY, rcGPt);
+			mHist->hRc_HFTMatched_DcaZVsPt->Fill(rcDcaZ, rcGPt);
+		    }
+		}
+		if(parentGeId>=cuts::parentGidCut1 
+			&& parentGeId<=cuts::parentGidCut2
+			&& (gePid == 2 || gePid ==3 )){
+		    mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt, 0);
+		    if(rcPxl1) mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt,1);
+		    if(rcPxl1 && rcPxl2) mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt, 2);
+		    if(rcPxl1 && rcPxl2 && rcIst) mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt, 3);
+		}
+
+		if(gePid == 2 || gePid == 3 && isHFTM) {
+		    if(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2) {
+			mHist->hRc_charm_DcaXYVsPt->Fill(rcDcaXY, rcGPt);
+			mHist->hRc_charm_DcaZVsPt->Fill(rcDcaZ, rcGPt);
+			mHist->hRc_charm_DcaVsPt->Fill(rcDca, rcGPt);
+		    }
+		    if(parentGeId>=cuts::parentGidHCut1 && parentGeId<=cuts::parentGidHCut2) {
+			mHist->hRc_incl_DcaXYVsPt->Fill(rcDcaXY, rcGPt);
+			mHist->hRc_incl_DcaZVsPt->Fill(rcDcaZ, rcGPt);
+			mHist->hRc_incl_DcaVsPt->Fill(rcDca, rcGPt);
+		    }
+		}
+	    }
+	}
+
+	bool whosChild = isCharmChild(parentGeId) || isMesonChild(parentGeId);
+	if(whosChild && isGoodMcTrack) {
 	    if(gePid == 2) {
 		int counts = rcEP->GetEntries();
-		new((*rcEP)[counts]) StMyTrack(gePid, parentGeId, rcDcaXY, rcDcaZ, mcMom, rcPMom, rcGMom);
+		new((*rcEP)[counts]) StMyTrack(itMc, rcIndex, gePid, parentId, parentGeId, rcDcaXY, rcDcaZ, mcMom, rcPMom, rcGMom, nHitsMapHFT);
 	    }
 	    if(gePid == 3) {
 		int counts = rcEM->GetEntries();
-		new((*rcEM)[counts]) StMyTrack(gePid, parentGeId, rcDcaXY, rcDcaZ, mcMom, rcPMom, rcGMom);
-	    }
-
-	    if(!(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2) && gePid != 2 && gePid != 3) {
-		mHist->hRc_DcaXYVsPt->Fill(rcDcaXY, rcPt);
-		mHist->hRc_DcaZVsPt->Fill(rcDcaZ, rcPt);
-		mHist->hRc_DcaVsPt->Fill(rcDca, rcPt);
-
-		mHist->hRc_PtVsPhi->Fill(rcPt*rcCharge, rcPhi0);
-		mHist->hRc_EtaVsPhi->Fill(rcEta, rcPhi0);
-
-		mHist->hRc_PtVsHFTMatch->Fill(rcPt, 0);
-		if(rcPxl1) mHist->hRc_PtVsHFTMatch->Fill(rcPt,1);
-		if(rcPxl1 && rcPxl2) mHist->hRc_PtVsHFTMatch->Fill(rcPt, 2);
-		if(rcPxl1 && rcPxl2 && rcIst) {
-		    mHist->hRc_PtVsHFTMatch->Fill(rcPt, 3);
-		    mHist->hRc_HFTMatched_PtVsPhi->Fill(rcPt*rcCharge, rcPhi0);
-		    mHist->hRc_HFTMatched_EtaVsPhi->Fill(rcEta, rcPhi0);
-
-		    mHist->hRc_HFTMatched_DcaVsPt->Fill(rcDca, rcPt);  
-		    mHist->hRc_HFTMatched_DcaXYVsPt->Fill(rcDcaXY, rcPt);
-		    mHist->hRc_HFTMatched_DcaZVsPt->Fill(rcDcaZ, rcPt);
-		}
-	    }
-	    if(parentGeId>=cuts::parentGidCut1 
-		    && parentGeId<=cuts::parentGidCut2
-		    && (gePid == 2 || gePid ==3 )){
-		mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt, 0);
-		if(rcPxl1) mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt,1);
-		if(rcPxl1 && rcPxl2) mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt, 2);
-		if(rcPxl1 && rcPxl2 && rcIst) mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt, 3);
-	    }
-
-	    if(gePid == 2 || gePid == 3) {
-		if(isPrimary) {
-		    mHist->hRc_incl_DcaXYVsPt->Fill(rcDcaXY, rcPt);
-		    mHist->hRc_incl_DcaZVsPt->Fill(rcDcaZ, rcPt);
-		    mHist->hRc_incl_DcaVsPt->Fill(rcDca, rcPt);
-		}
-		if(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2) {
-		    mHist->hRc_charm_DcaXYVsPt->Fill(rcDcaXY, rcPt);
-		    mHist->hRc_charm_DcaZVsPt->Fill(rcDcaZ, rcPt);
-		    mHist->hRc_charm_DcaVsPt->Fill(rcDca, rcPt);
-		}
+		new((*rcEM)[counts]) StMyTrack(itMc, rcIndex, gePid, parentId, parentGeId, rcDcaXY, rcDcaZ, mcMom, rcPMom, rcGMom, nHitsMapHFT);
 	    }
 	}
 
@@ -352,6 +460,193 @@ int StMyAnalysisMaker::loopMcVertex() {
     }
 }
 
+
+void StMyAnalysisMaker::makePair() {
+    int nEM = rcEM->GetEntries(); 
+    int nEP = rcEP->GetEntries();
+
+    for(int itEM=0; itEM<nEM; itEM++) {
+	StMyTrack *emtrk = (StMyTrack *) rcEM->UncheckedAt(itEM);
+	if(!emtrk) continue;
+	int indexEM     = emtrk->indexMc();
+	int parentPidEM = emtrk->parentPid();
+	int indexPEM    = emtrk->indexParent();;
+	int rcIndexEM   = emtrk->indexRc();
+
+	int parMaskEM = 0;
+	if(isCharmChild(parentPidEM)) parMaskEM = 1;
+	if(isMesonChild(parentPidEM)) parMaskEM = 2;
+
+	if(!parMaskEM) continue;
+
+	for(int itEP=0; itEP<nEP; itEP++) {
+	    StMyTrack *eptrk = (StMyTrack *) rcEP->UncheckedAt(itEP);
+	    if(!eptrk) continue;
+	    int indexEP     = eptrk->indexMc();
+	    int parentPidEP = eptrk->parentPid();
+	    int indexPEP    = eptrk->indexParent();;
+	    int rcIndexEP   = eptrk->indexRc();     
+
+	    if(parMaskEM == 2 && indexPEM != indexPEP) continue; 
+	    if(parMaskEM == 1 && !isCharmChild(parentPidEP)) continue;
+	    //cout<<"a Pair ["<<parentPidEP<<", "<<parentPidEM<<"]"<<" ["<<indexPEP<<","<<indexPEM<<"] ["<<rcIndexEP<<" "<<rcIndexEM<<"]"<<endl;
+
+	    StPicoMcTrack *emMcTrk = (StPicoMcTrack *) mPicoDst->mctrack(indexEM);
+	    StPicoMcTrack *epMcTrk = (StPicoMcTrack *) mPicoDst->mctrack(indexEP);
+
+	    float dcaXYEM = emtrk->dcaXY();
+	    float dcaZEM  = emtrk->dcaZ();
+
+	    float dcaXYEP = eptrk->dcaXY();
+	    float dcaZEP  = eptrk->dcaZ();
+
+	    StThreeVectorF mcEM = emtrk->mcMom(); 
+	    StThreeVectorF mcEP = eptrk->mcMom();
+
+	    StThreeVectorF gEM = emtrk->gMom(); 
+	    StThreeVectorF gEP = eptrk->gMom();
+
+	    StThreeVectorF pEM = emtrk->pMom(); 
+	    StThreeVectorF pEP = eptrk->pMom();
+
+	    TLorentzVector mcPair(0,0,0,0);
+	    TLorentzVector rcPair(0,0,0,0);
+	    TLorentzVector rcGPair(0,0,0,0);
+
+	    TLorentzVector mce  ( 0 , 0 , 0 , 0);
+	    TLorentzVector mcp  ( 0 , 0 , 0 , 0);
+	    TLorentzVector rce  ( 0 , 0 , 0 , 0);
+	    TLorentzVector rcp  ( 0 , 0 , 0 , 0);
+	    TLorentzVector rcge ( 0 , 0 , 0 , 0);
+	    TLorentzVector rcgp ( 0 , 0 , 0 , 0);
+
+
+	    mce.SetXYZM(mcEM.x(), mcEM.y(), mcEM.z(), cuts::massE); 
+	    mcp.SetXYZM(mcEP.x(), mcEP.y(), mcEP.z(), cuts::massE); 
+	    rce.SetXYZM(pEM.x(), pEM.y(), pEM.z(), cuts::massE); 
+	    rcp.SetXYZM(pEP.x(), pEP.y(), pEP.z(), cuts::massE); 
+	    rcge.SetXYZM(gEM.x(), gEM.y(), gEM.z(), cuts::massE); 
+	    rcgp.SetXYZM(gEP.x(), gEP.y(), gEP.z(), cuts::massE); 
+
+	    mcPair  = mce+mcp;
+	    rcPair  = rce+rcp;
+	    rcGPair = rcge+rcgp;
+
+	    float decayL = -999;
+	    float dcaV0  = -999;
+	    float dcaPair = -999;
+	    float rcPairM = -999;
+	    float openangle = -999;
+	    float decayLMc = -999;
+
+	    if(rcIndexEM>=0 && rcIndexEP>=0 && rcIndexEM<Pico::USHORTMAX && rcIndexEP<Pico::USHORTMAX) {
+		StPicoTrack *emRcTrk = (StPicoTrack*) mPicoDst->track(rcIndexEM);
+		StPicoTrack *epRcTrk = (StPicoTrack*) mPicoDst->track(rcIndexEP);
+
+		if(isGoodTrack(emRcTrk) && isGoodTrack(epRcTrk)) {
+		    rcPairM = rcPair.M();
+		    StPhysicalHelixD ele = emRcTrk->helix();
+		    StPhysicalHelixD pos = epRcTrk->helix();
+
+		    pairD pair = pos.pathLengths(ele);
+		    double posLength = pair.first;
+		    double eleLength = pair.second;
+
+		    StThreeVector<double> posOrigin = pos.at(posLength);
+		    StThreeVector<double> eleOrigin = ele.at(eleLength);
+		    StThreeVector<double> v0        = (posOrigin+eleOrigin)*0.5;
+		    StThreeVector<double> diffe     = posOrigin-eleOrigin;
+		    dcaPair = diffe.mag();
+
+		    StThreeVector<double> posV0Mom = pos.momentumAt(posLength, bField);
+		    StThreeVector<double> eleV0Mom = ele.momentumAt(eleLength, bField);
+
+		    openangle = posV0Mom.phi()-eleV0Mom.phi(); 
+		    double PI = TMath::Pi();
+		    if(openangle<-PI) openangle += 2*PI;
+		    if(openangle>PI)  openangle -= 2*PI;
+
+		    decayL = (v0 - pVtx).mag();
+		    TVector3 v0L((v0-pVtx).x(), (v0-pVtx).y(), (v0-pVtx).z());
+		    TVector3 Apos(posV0Mom.x(), posV0Mom.y(), posV0Mom.z()); 
+		    TVector3 Aele(eleV0Mom.x(), eleV0Mom.y(), eleV0Mom.z()); 
+		    TVector3 Apair = Apos+Aele;
+
+		    float costheta =  Apair.Unit().Dot(v0L.Unit());
+		    decayL *= costheta<0 ? -1: 1;
+		    dcaV0 = decayL*costheta;
+
+		    if(parMaskEM == 2) {
+			StPicoMcTrack *parMcTrk = (StPicoMcTrack *) mPicoDst->mctrack(indexPEM);
+			StThreeVectorF pVtxMc = mPicoDst->mcevent()->pVertex();
+			StThreeVectorF v0LMc = parMcTrk->Origin()-pVtxMc;
+			decayLMc = v0LMc.mag();
+		    }
+		    //cout<<parentPidEP<<" "<<dcaPair<<" "<<decayLMc<<" "<<decayL<<" "<<rcPairM <<" "<<mcPair.M()<<endl;
+		}
+	    }
+
+
+	    mPairDst->mcPairM[nPairs]   = mcPair.M();
+	    mPairDst->decayL[nPairs]    = decayL;
+	    mPairDst->dcaV0[nPairs]     = dcaV0;
+	    mPairDst->dcaPair[nPairs]   = dcaPair;
+	    mPairDst->openAngle[nPairs] = openangle;
+	    mPairDst->pairM[nPairs]     = rcPairM;
+
+	    mPairDst->gePid1[nPairs]       = 3;
+	    mPairDst->parentPid1[nPairs]   = parentPidEM;
+	    mPairDst->parentId1[nPairs]    = indexPEM;
+	    mPairDst->pP1x[nPairs]         = pEM.x();
+	    mPairDst->pP1y[nPairs]         = pEM.y();
+	    mPairDst->pP1z[nPairs]         = pEM.z();
+	    mPairDst->gP1x[nPairs]         = gEM.x();
+	    mPairDst->gP1y[nPairs]         = gEM.y();
+	    mPairDst->gP1z[nPairs]         = gEM.z();
+	    mPairDst->dca1XY[nPairs]       = dcaXYEM;
+	    mPairDst->dca1Z[nPairs]        = dcaZEM;
+	    mPairDst->idtrue1_pxl1[nPairs] = emMcTrk->Pxl1Truth();
+	    mPairDst->idtrue1_pxl2[nPairs] = emMcTrk->Pxl2Truth();
+	    mPairDst->idtrue1_ist[nPairs]  = emMcTrk->IstTruth();
+	    mPairDst->hftHitMap1[nPairs]   = emtrk->hftHitsMap();
+
+	    mPairDst->gePid2[nPairs]       = 2;
+	    mPairDst->parentPid2[nPairs]   = parentPidEP;
+	    mPairDst->parentId2[nPairs]    = indexPEP;
+	    mPairDst->pP2x[nPairs]         = pEP.x();
+	    mPairDst->pP2y[nPairs]         = pEP.y();
+	    mPairDst->pP2z[nPairs]         = pEP.z();
+	    mPairDst->gP2x[nPairs]         = gEP.x();
+	    mPairDst->gP2y[nPairs]         = gEP.y();
+	    mPairDst->gP2z[nPairs]         = gEP.z();
+	    mPairDst->dca2XY[nPairs]       = dcaXYEP;
+	    mPairDst->dca2Z[nPairs]        = dcaZEP;
+	    mPairDst->idtrue2_pxl1[nPairs] = epMcTrk->Pxl1Truth();
+	    mPairDst->idtrue2_pxl2[nPairs] = epMcTrk->Pxl2Truth();
+	    mPairDst->idtrue2_ist[nPairs]  = epMcTrk->IstTruth();
+	    mPairDst->hftHitMap2[nPairs]   = eptrk->hftHitsMap();
+
+	    nPairs++;
+	}
+    }
+}
+
+bool StMyAnalysisMaker::isGoodTrack(StPicoTrack * trk) {
+    if(!trk) return kFALSE;
+    if(trk->charge()==0) return kFALSE;
+    StThreeVectorF mom = trk->pMom();
+    return mom.perp()>0.2 && fabs(mom.pseudoRapidity())<1. && trk->nHitsFit()>20 ;
+}
+
+
+bool StMyAnalysisMaker::isCharmChild(int parentPid) {
+    return parentPid>=cuts::parentGidCut1 && parentPid<=cuts::parentGidCut2;
+}
+
+bool StMyAnalysisMaker::isMesonChild(int parentPid) {
+    return parentPid>=cuts::parentGidHCut1 && parentPid<=cuts::parentGidHCut2;
+}
+
 int StMyAnalysisMaker::mcFilterAndGharge(int gePid) {
     // I only like pi, k, p and e
     if(gePid == 2 || gePid == 8 || gePid == 11 || gePid == 14) return 1;
@@ -371,7 +666,7 @@ int StMyAnalysisMaker::getParent(StPicoMcTrack const * const mcTrk, bool doTrace
 }
 
 int StMyAnalysisMaker::getRcTrack(StPicoMcTrack const * const mcTrk) {
-    int rcTrkIndex = -999;
+    int rcTrkIndex = Pico::USHORTMAX;
     int assoId = mcTrk->assoId();
     int nRcTracks = mPicoDst->numberOfTracks();
     for(int i=0; i<nRcTracks; i++) {
