@@ -94,9 +94,9 @@ void trig( Int_t n=0, Int_t mode)
 {
     for ( Int_t i=1; i<n+1; i++ ) {
 	chain->Clear();
-	vertex(i, mode);
-	//if(doFlag) kinematics->Dist(100, "pi0_Dalitz", ptDist_flat30, yDist);
-	//if(doFlag) kinematics->Dist(100, "eta_Dalitz", ptDist_flat30, yDist);
+	vertex(i, 1);
+	if(mode == 3) kinematics->Dist(10, "MyD0bar", ptDist_flat10, yDist);
+	if(mode == 3) kinematics->Dist(10, "MyD0" , ptDist_flat10, yDist);
 	chain->Make();
 	_primary->event()->Print();
 	if(i==1) command("gprint kine");
@@ -105,7 +105,7 @@ void trig( Int_t n=0, Int_t mode)
 // ----------------------------------------------------------------------------
 void myKine()
 { 
-    gSystem->Load("StarKinematics.so");
+    gSystem->Load("libKinematics.so");
     kinematics = new StarKinematics();  
     _primary -> AddGenerator(kinematics);
 }
@@ -416,13 +416,11 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    Hijing(0);
 	    myPythia8();
 	    break;
-	//case 3 :
-	//    cout<<"YiSaid : Running at Pythia8+StarGenEventReader mode"<<endl;
-	//    myPythia8();
-	//    TString infilename;
-	//    infilename.Form(inPythia6File);
-	//    myEventReader(infilename);
-	//    break;
+	case 3 :
+	    cout<<"YiSaid : Running at Kine+Hijing mode"<<endl;
+	    myKine();
+	    Hijing(decayOutSidePythia);
+	    break;
 	//case 4 :
 	//    cout<<"YiSaid : Running at Hijing Standalone mode"<<endl; 
 	//    Hijing();
@@ -477,7 +475,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //
     //geometry("y2014");
     command("gkine -4 0");
-    if(mode !=0 && mode !=3) command(fzname);
+    if(mode !=0) command(fzname);
     //command(fzname);
 
     //Double_t pt0 = 3.0;

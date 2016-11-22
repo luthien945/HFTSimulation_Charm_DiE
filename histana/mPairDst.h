@@ -1,13 +1,13 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Tue Nov 15 14:48:42 2016 by ROOT version 5.34/30
+// Mon Nov 21 20:57:21 2016 by ROOT version 5.34/30
 // from TTree mPairDst/mPairDst
-// found on file: test.root
+// found on file: ../hadd/charm_hijing_pythia6.root
 //////////////////////////////////////////////////////////
 
 #ifndef mPairDst_h
 #define mPairDst_h
-#define MAX_N_PAIR 1000
+#define MAX_N_PAIR 500
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -46,9 +46,9 @@ public :
    Float_t         gP1z[MAX_N_PAIR];   //[nPairs]
    Float_t         dca1XY[MAX_N_PAIR];   //[nPairs]
    Float_t         dca1Z[MAX_N_PAIR];   //[nPairs]
-   Bool_t          idtrue1_pxl1[MAX_N_PAIR];   //[nPairs]
-   Bool_t          idtrue1_pxl2[MAX_N_PAIR];   //[nPairs]
-   Bool_t          idtrue1_ist[MAX_N_PAIR];   //[nPairs]
+   Int_t           idtrue1_pxl1[MAX_N_PAIR];   //[nPairs]
+   Int_t           idtrue1_pxl2[MAX_N_PAIR];   //[nPairs]
+   Int_t           idtrue1_ist[MAX_N_PAIR];   //[nPairs]
    Int_t           hftHitMap1[MAX_N_PAIR];   //[nPairs]
    UShort_t        gePid2[MAX_N_PAIR];   //[nPairs]
    UShort_t        parentPid2[MAX_N_PAIR];   //[nPairs]
@@ -61,9 +61,9 @@ public :
    Float_t         gP2z[MAX_N_PAIR];   //[nPairs]
    Float_t         dca2XY[MAX_N_PAIR];   //[nPairs]
    Float_t         dca2Z[MAX_N_PAIR];   //[nPairs]
-   Bool_t          idtrue2_pxl1[MAX_N_PAIR];   //[nPairs]
-   Bool_t          idtrue2_pxl2[MAX_N_PAIR];   //[nPairs]
-   Bool_t          idtrue2_ist[MAX_N_PAIR];   //[nPairs]
+   Int_t           idtrue2_pxl1[MAX_N_PAIR];   //[nPairs]
+   Int_t           idtrue2_pxl2[MAX_N_PAIR];   //[nPairs]
+   Int_t           idtrue2_ist[MAX_N_PAIR];   //[nPairs]
    Int_t           hftHitMap2[MAX_N_PAIR];   //[nPairs]
 
    // List of branches
@@ -127,9 +127,9 @@ mPairDst::mPairDst(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("test.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../hadd/charm_hijing_pythia6.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("test.root");
+         f = new TFile("../hadd/charm_hijing_pythia6.root");
       }
       f->GetObject("mPairDst",tree);
 

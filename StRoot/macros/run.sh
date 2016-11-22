@@ -46,6 +46,7 @@ EOF
 mv hijing* ./Files_$job/Hijing/.
 }
 
+
 function doStarsim {
 # ---- Producing sim file .fzd
 echo "A hijing......"
@@ -55,6 +56,19 @@ inMode=$2
 root4star <<EOF
 .L starsim.hijing.Charm.C
 starsim($nevt,$run,$RANDOM,$inMode,"$inPyFile")
+.q
+EOF
+mv hijing* ./Files_$job/fzd/.
+}
+
+function doStarsimTest {
+# ---- Producing sim file .fzd
+echo "A hijing......"
+inMode=$1
+
+root4star <<EOF
+.L starsim.hijing.Charm.C
+starsim($nevt,$run,$RANDOM,$inMode)
 .q
 EOF
 mv hijing* ./Files_$job/fzd/.
@@ -151,6 +165,7 @@ if [ ! -e "$inPyFile" ]; then
 doStarPythia
 fi
 doStarsim $inPyFile 1
+#doStarsimTest 3
 
 doTpcReco $inFzd
 doHftReco $inEvent
