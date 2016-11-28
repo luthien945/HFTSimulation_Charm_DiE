@@ -82,6 +82,7 @@ void vertex(int i, int mode)
 	vx = StarRandom::Instance().gauss(vx_sig);
 	vy = StarRandom::Instance().gauss(vy_sig);
     }
+    cout<<"YiSaid : runing with mode "<<mode<<endl;
     cout<<"YiSaid : set vertex to ["
 	<<std::setw(5)<<vx<<" "
 	<<std::setw(5)<<vy<<" "
@@ -92,11 +93,12 @@ void vertex(int i, int mode)
 // ----------------------------------------------------------------------------
 void trig( Int_t n=0, Int_t mode)
 {
+    cout<<"YiSaid : runing with mode "<<mode<<endl;
     for ( Int_t i=1; i<n+1; i++ ) {
 	chain->Clear();
-	vertex(i, 1);
-	if(mode == 3) kinematics->Dist(10, "MyD0bar", ptDist_flat10, yDist);
-	if(mode == 3) kinematics->Dist(10, "MyD0" , ptDist_flat10, yDist);
+	vertex(i, mode);
+	//if(mode == 3) kinematics->Dist(10, "MyD0bar", ptDist_flat10, yDist);
+	//if(mode == 3) kinematics->Dist(10, "MyD0" , ptDist_flat10, yDist);
 	chain->Make();
 	_primary->event()->Print();
 	if(i==1) command("gprint kine");
