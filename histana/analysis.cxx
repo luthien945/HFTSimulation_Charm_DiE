@@ -42,6 +42,8 @@
 #include "TString.h"
 //#include "StPhysicalHelixD.h"
 #include "SystemOfUnits.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 using std::cout;
 using std::endl;
@@ -54,18 +56,27 @@ void bookHistograms();
 void initCutHist(TString name);
 
 int main(int argc, char** argv){
-    if(argc!=1&&argc!=3) {
-	cout<<"Usage: analysis [inDir] [outfile]"<<endl;
+    if(argc!=1 && argc!=3 && argc!=2) {
+	cout<<"Usage: analysis [inDir] [outfile] [option]"<<endl;
 	return -1;
     }
     char *inFile = "test.list";
     char outFile[100];
-    sprintf(outFile,"test2.root");
+    sprintf(outFile,"charm_simu.root");
 
-    if(argc==3){
+    if(argc>=3){
 	inFile = argv[1];
 	sprintf(outFile, "%s", argv[2]);
     }
+
+    bool doTrueM = true;
+    if(argc == 4) {
+	doTrueM = atoi(argv[3]);
+    } else if(argc == 2) {
+	doTrueM = atoi(argv[1]);
+    }
+
+    if(doTrueM) sprintf(outFile, "charm_simu_TrueM.root");
 
     TString lazy;
 
@@ -76,8 +87,10 @@ int main(int argc, char** argv){
     //--------------------------------------------------
     init();
     bookHistograms();
-    initCutHist("dcaTune");
-    initCutHist("dcaPairTune");
+    fout->mkdir("dcaTune");
+    fout->mkdir("dcaPairTune");
+    //initCutHist("dcaTune");
+    //initCutHist("dcaPairTune");
     //initCutHist("decayLTune");
     //initCutHist("dcaV0Tune");
     //---------------------------------------------------
@@ -128,6 +141,8 @@ int main(int argc, char** argv){
 	    counter++;
 	    int parentPid1  = tree->parentPid1[it];
 	    int parentPid2  = tree->parentPid2[it];
+	    float decayLMc  = tree->decayLMc[it];
+	    float parDisMc  = tree->parDisMc[it];
 	    float mcPairM   = tree->mcPairM[it];
 	    float pairM     = tree->pairM[it];
 	    float decayL    = tree->decayL[it];
@@ -175,15 +190,18 @@ int main(int argc, char** argv){
 	    hMassVsParentMc -> Fill(mcPairM , indexP);
 
 	    if(pairM<0) continue;
+	    //if(parentPid1>12100 && parDisMc>1e-6) continue;
 
 	    TLorentzVector pair(0,0,0,0);
 	    pair.SetVectM(dau1+dau2, pairM);
 
+	    if(fabs(pair.Rapidity())>1.) continue;
+	    if(!isHftM(hftMap1) || !isHftM(hftMap2)) continue;
+
 	    //cout<<isHftM(hftMap1)<<" "<<" "<<trueM1<<" "<<idtrue1_pxl1<<" "<<idtrue1_pxl2<<" "<<idtrue1_ist<<endl;
 	    //cout<<isHftM(hftMap2)<<" "<<" "<<trueM2<<" "<<idtrue2_pxl1<<" "<<idtrue2_pxl2<<" "<<idtrue2_ist<<endl;
 
-	    if(isHftM(hftMap1) && isHftM(hftMap2) && fabs(pair.Rapidity())<1. && trueM1 && trueM2) 
-	    //if(isHftM(hftMap1) && isHftM(hftMap2) && fabs(pair.Rapidity())<1.) 
+	    if(!doTrueM || trueM1 && trueM2)
 	    {
 		hMassVsParentRc -> Fill(pairM    , 0);
 		hDca1XYVsParent -> Fill(dca1XY   , 0);
@@ -231,10 +249,12 @@ int main(int argc, char** argv){
 		    hDcaVsPtCharm->Fill(dca1, pt1);
 		    hDcaVsPtCharm->Fill(dca2, pt2);
 
-		    hDcaPairVsMassCharm->Fill(dcaPair, pairM);
-		    hDcaV0VsMassCharm->Fill(dcaV0, pairM);
-		    hDecayLVsMassCharm->Fill(decayL, pairM);
-		    hOpenAngleVsMassCharm->Fill(openAngle, pairM);
+		    if(pt1>0.5 && pt2>0.5) {
+			hDcaPairVsMassCharm->Fill(dcaPair, pairM);
+			hDcaV0VsMassCharm->Fill(dcaV0, pairM);
+			hDecayLVsMassCharm->Fill(decayL, pairM);
+			hOpenAngleVsMassCharm->Fill(openAngle, pairM);
+		    }
 		}
 		if(parentPid1>12100) {
 		    hDcaXYVsPtMeson->Fill(dca1XY, pt1);
@@ -244,39 +264,72 @@ int main(int argc, char** argv){
 		    hDcaVsPtMeson->Fill(dca1, pt1);
 		    hDcaVsPtMeson->Fill(dca2, pt2);
 
-		    hDcaPairVsMassMeson->Fill(dcaPair, pairM);
-		    hDcaV0VsMassMeson->Fill(dcaV0, pairM);
-		    hDecayLVsMassMeson->Fill(decayL, pairM);
-		    hOpenAngleVsMassMeson->Fill(openAngle, pairM);
-		}
-#if 1
-		fout->cd("dcaTune");
-		for(int i=0;i<6;i++) {
-		    lazy.Form("dcaTune/hMassC_%i",i);
-		    TH1F *htmC; fout->GetObject(lazy.Data(), htmC);
-		    lazy.Form("dcaTune/hMassM_%i",i);
-		    TH1F *htmM; fout->GetObject(lazy.Data(), htmM);
-
-		    if(dca1<dcaCuts[i] && dca2<dcaCuts[i]) {
-			if(parentPid1<12100) htmC->Fill(pairM);
-			if(parentPid1>12100) htmM->Fill(pairM);
+		    if(pt1>0.5 && pt2>0.5) {
+			hDcaPairVsMassMeson->Fill(dcaPair, pairM);
+			hDcaV0VsMassMeson->Fill(dcaV0, pairM);
+			hDecayLVsMassMeson->Fill(decayL, pairM);
+			hOpenAngleVsMassMeson->Fill(openAngle, pairM);
 		    }
 		}
-
-		fout->cd("dcaPairTune");
-		for(int i=0;i<10;i++) {
-		    lazy.Form("dcaPairTune/hMassC_%i",i);
-		    TH1F *htmC; fout->GetObject(lazy.Data(), htmC);
-		    lazy.Form("dcaPairTune/hMassM_%i",i);
-		    TH1F *htmM; fout->GetObject(lazy.Data(), htmM);
-
-		    if(dcaPair<dcaPairCuts[i]) {
-			if(parentPid1<12100) htmC->Fill(pairM);
-			if(parentPid1>12100) htmM->Fill(pairM);
-		    }
-		}
-#endif
 	    }
+
+#if 1
+
+	    if(pt1<0.5 && pt2<0.5) continue;
+	    fout->cd("dcaTune");
+	    htmC = NULL;
+	    htmM = NULL;
+	    for(int i=0;i<10;i++) {
+		lazy.Form("dcaTune/hMassC_%i", i);
+		fout->GetObject(lazy.Data(), htmC);
+		if(!htmC) {
+		    lazy.Form("hMassC_%i", i);
+		    htmC = new TH1F(lazy.Data(), "", 400, 0, 4);
+		}
+
+		lazy.Form("dcaTune/hMassM_%i",i);
+		fout->GetObject(lazy.Data(), htmM);
+		if(!htmM) {
+		    lazy.Form("hMassM_%i", i);
+		    htmM = new TH1F(lazy.Data(), "", 400, 0, 4);
+		}
+
+		if(dca1<dcaCuts[i] && dca2<dcaCuts[i]) {
+		    if(parentPid1<12100) htmC->Fill(pairM);
+		    if(parentPid1>12100) htmM->Fill(pairM);
+		}
+	    }
+
+	    fout->cd("dcaPairTune");
+	    htmC = NULL;
+	    htmM = NULL;
+	    for(int i=0;i<10;i++) {
+		//lazy.Form("dcaPairTune/hMassC_%i",i);
+		//TH1F *htmC; fout->GetObject(lazy.Data(), htmC);
+		//lazy.Form("dcaPairTune/hMassM_%i",i);
+		//TH1F *htmM; fout->GetObject(lazy.Data(), htmM);
+
+		lazy.Form("dcaPairTune/hMassC_%i", i);
+		fout->GetObject(lazy.Data(), htmC);
+		if(!htmC) {
+		    lazy.Form("hMassC_%i", i);
+		    htmC = new TH1F(lazy.Data(), "", 400, 0, 4);
+		}
+		lazy.Form("dcaPairTune/hMassM_%i",i);
+		fout->GetObject(lazy.Data(), htmM);
+		if(!htmM) {
+		    lazy.Form("hMassM_%i", i);
+		    htmM = new TH1F(lazy.Data(), "", 400, 0, 4);
+		}
+
+		if(dca1>0.015 && dca2>0.015) continue;
+
+		if(dcaPair<dcaPairCuts[i]) {
+		    if(parentPid1<12100) htmC->Fill(pairM);
+		    if(parentPid1>12100) htmM->Fill(pairM);
+		}
+	    }
+#endif
 	}
     }
     cout<<"number of pairs : "<<counter<<endl;

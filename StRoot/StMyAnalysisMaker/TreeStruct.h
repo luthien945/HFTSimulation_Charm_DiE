@@ -10,6 +10,8 @@ class epPair : public TObject {
 	Int_t nPairs;
 
 	// nPairs
+	Float_t   *decayLMc      ; //[nPairs]
+	Float_t   *parDisMc      ; //[nPairs]
 	Float_t   *decayL        ; //[nPairs]
 	Float_t   *dcaV0         ; //[nPairs]
 	Float_t   *dcaPair       ; //[nPairs]
@@ -17,9 +19,9 @@ class epPair : public TObject {
 	Float_t   *pairM         ; //[nPairs]
 	Float_t   *openAngle     ; //[nPairs]
 
-	UShort_t  *gePid1       ; //[nPairs]
-	UShort_t  *parentPid1   ; //[nPairs]
-	UShort_t  *parentId1    ; //[nPairs]
+	UShort_t  *gePid1        ; //[nPairs]
+	UShort_t  *parentPid1    ; //[nPairs]
+	UShort_t  *parentId1     ; //[nPairs]
 	Float_t    *pP1x         ; //[nPairs]
 	Float_t    *pP1y         ; //[nPairs]
 	Float_t    *pP1z         ; //[nPairs]
@@ -33,9 +35,9 @@ class epPair : public TObject {
 	Int_t      *idtrue1_ist  ; //[nPairs]
 	Int_t      *hftHitMap1   ; //[nPairs]
 
-	UShort_t  *gePid2       ; //[nPairs]
-	UShort_t  *parentPid2   ; //[nPairs]
-	UShort_t  *parentId2    ; //[nPairs]
+	UShort_t  *gePid2        ; //[nPairs]
+	UShort_t  *parentPid2    ; //[nPairs]
+	UShort_t  *parentId2     ; //[nPairs]
 	Float_t    *pP2x         ; //[nPairs]
 	Float_t    *pP2y         ; //[nPairs]
 	Float_t    *pP2z         ; //[nPairs]

@@ -28,6 +28,8 @@ Int_t StCharmEventFilter::Filter(StarGenEvent *mEvent) {
       int pdgId = p->GetId();
       TLorentzVector mom;
       mom.SetXYZM(p->GetPx(), p->GetPy(), p->GetPz(), p->GetMass());
+      if(mom.P()<1e-4) continue;
+      if(mom.Perp()<1e-4) continue;
 
       float rapidity = mom.Rapidity();
       float eta      = mom.Eta();
@@ -40,7 +42,7 @@ Int_t StCharmEventFilter::Filter(StarGenEvent *mEvent) {
 	  } 
       }
 
-      if(isCharm && fabs(eta)<1.5) nCharms++;
+      if(isCharm && fabs(eta)<1.5 && fabs(rapidity)<1.5) nCharms++;
   }
 
   if(nCharms>=2) return StarGenEvent::kAccept; 

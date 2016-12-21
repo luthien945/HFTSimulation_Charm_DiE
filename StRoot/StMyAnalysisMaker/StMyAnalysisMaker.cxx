@@ -125,12 +125,18 @@ void StMyAnalysisMaker::clearArrays() {
     rcEM->Clear();
 }
 
+bool StMyAnalysisMaker::isTrueMatch(StPicoMcTrack const * const trk) {
+    return trk->Pxl1Truth() && trk->Pxl2Truth() && trk->IstTruth();
+}
+
 void StMyAnalysisMaker::initTree() {
     mOutFile->cd();
     mTree = new TTree("mPairDst", "mPairDst");
     mPairDst = new epPair();
 
     // nPairs
+    mPairDst->decayLMc     = new Float_t   [MAX_N_PAIR]; //[nPairs]
+    mPairDst->parDisMc     = new Float_t   [MAX_N_PAIR]; //[nPairs]
     mPairDst->decayL       = new Float_t   [MAX_N_PAIR]; //[nPairs]
     mPairDst->dcaV0        = new Float_t   [MAX_N_PAIR]; //[nPairs]
     mPairDst->dcaPair      = new Float_t   [MAX_N_PAIR]; //[nPairs]
@@ -240,7 +246,13 @@ int StMyAnalysisMaker::loopMcTrack() {
 		}
 	    }
 	}
+
 	if(parDis>0.001) continue; // primary parents
+
+	bool isKineEP = (gePid == 2 || gePid == 3) && parentId<0 && isPrimary; 
+	if(isKineEP) parentGeId = 0;
+
+	//if( (gePid == 2 || gePid == 3) && parentId<0 && isPrimary) cout<<"YiSaid : Kine input e+/e- : "<<gePid<<" "<<parentId<<endl;
 
 	if(ancestorId>=0 && ancestorId<=Pico::USHORTMAX) {
 	    StPicoMcTrack *mcAncestorTrk = (StPicoMcTrack*) mPicoDst->mctrack(ancestorId);
@@ -360,7 +372,7 @@ int StMyAnalysisMaker::loopMcTrack() {
 	    rcDcaZ  = rcDcaPoint.z()-pVtx.z();
 	    rcDcaXY = rcHelix.geometricSignedDistance(pVtx.x(), pVtx.y());
 	    rcDca   = TMath::Sqrt(rcDcaZ*rcDcaZ+rcDcaXY*rcDcaXY);
-	    rcDca *= rcDcaXY>=0 ? 1. : -1.;
+	    //rcDca *= rcDcaXY>=0 ? 1. : -1.;
 
 	    //bool isGoodRcTrack = rcPt>cuts::ptMin && fabs(rcEta)<1. && nTpcCommonHits>10 && nHitsTpc>20;
 	    bool isGoodRcTrack = isGoodTrack(rcTrk);
@@ -403,17 +415,49 @@ int StMyAnalysisMaker::loopMcTrack() {
 			mHist->hRc_charm_DcaXYVsPt->Fill(rcDcaXY, rcGPt);
 			mHist->hRc_charm_DcaZVsPt->Fill(rcDcaZ, rcGPt);
 			mHist->hRc_charm_DcaVsPt->Fill(rcDca, rcGPt);
+			if(isTrueMatch(mcTrk)){
+			    mHist->hRc_charm_DcaVsPt_TrueM->Fill(rcDca, rcGPt);
+			    mHist->hRc_charm_DcaXYVsPt_TrueM->Fill(rcDcaXY, rcGPt);
+			    mHist->hRc_charm_DcaZVsPt_TrueM->Fill(rcDcaZ, rcGPt);
+			}
 		    }
 		    if(parentGeId>=cuts::parentGidHCut1 && parentGeId<=cuts::parentGidHCut2) {
 			mHist->hRc_incl_DcaXYVsPt->Fill(rcDcaXY, rcGPt);
 			mHist->hRc_incl_DcaZVsPt->Fill(rcDcaZ, rcGPt);
 			mHist->hRc_incl_DcaVsPt->Fill(rcDca, rcGPt);
+			if(isTrueMatch(mcTrk)){
+			    mHist->hRc_incl_DcaVsPt_TrueM->Fill(rcDca, rcGPt);
+			    mHist->hRc_incl_DcaXYVsPt_TrueM->Fill(rcDcaXY, rcGPt);
+			    mHist->hRc_incl_DcaZVsPt_TrueM->Fill(rcDcaZ, rcGPt);
+			}
+		    }
+		}
+		if(isHFTM && isPrimary) {
+		    if(gePid == 2 || gePid == 3) {
+			mHist->hDcaVsPt[0]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt[0]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt[0]->Fill(rcDcaZ, rcGPt);
+		    }
+		    if(gePid == 8 || gePid == 9) {
+			mHist->hDcaVsPt[1]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt[1]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt[1]->Fill(rcDcaZ, rcGPt);
+		    }
+		    if(gePid == 11 || gePid == 12) {
+			mHist->hDcaVsPt[2]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt[2]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt[2]->Fill(rcDcaZ, rcGPt);
+		    }
+		    if(gePid == 14 || gePid == 15) {
+			mHist->hDcaVsPt[3]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt[3]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt[3]->Fill(rcDcaZ, rcGPt);
 		    }
 		}
 	    }
 	}
 
-	bool whosChild = isCharmChild(parentGeId) || isMesonChild(parentGeId);
+	bool whosChild = isCharmChild(parentGeId) || isMesonChild(parentGeId) || isKineEP;
 	if(whosChild && isGoodMcTrack) {
 	    if(gePid == 2) {
 		int counts = rcEP->GetEntries();
@@ -474,8 +518,10 @@ void StMyAnalysisMaker::makePair() {
 	int rcIndexEM   = emtrk->indexRc();
 
 	int parMaskEM = 0;
-	if(isCharmChild(parentPidEM)) parMaskEM = 1;
-	if(isMesonChild(parentPidEM)) parMaskEM = 2;
+	if(parentPidEM == 0) parMaskEM = 3;
+	else if(isCharmChild(parentPidEM)) parMaskEM = 1;
+	else if(isMesonChild(parentPidEM)) parMaskEM = 2;
+
 
 	if(!parMaskEM) continue;
 
@@ -487,6 +533,7 @@ void StMyAnalysisMaker::makePair() {
 	    int indexPEP    = eptrk->indexParent();;
 	    int rcIndexEP   = eptrk->indexRc();     
 
+	    if(parMaskEM == 3 && parentPidEP != 0) continue;
 	    if(parMaskEM == 2 && indexPEM != indexPEP) continue; 
 	    if(parMaskEM == 1 && !isCharmChild(parentPidEP)) continue;
 	    //cout<<"a Pair ["<<parentPidEP<<", "<<parentPidEM<<"]"<<" ["<<indexPEP<<","<<indexPEM<<"] ["<<rcIndexEP<<" "<<rcIndexEM<<"]"<<endl;
@@ -582,7 +629,8 @@ void StMyAnalysisMaker::makePair() {
 			StThreeVectorF v0LMc = parMcTrk->Origin()-pVtxMc;
 			decayLMc = v0LMc.mag();
 		    }
-		    //cout<<parentPidEP<<" "<<dcaPair<<" "<<decayLMc<<" "<<decayL<<" "<<rcPairM <<" "<<mcPair.M()<<endl;
+		    if(parentPidEP == 0 && parentPidEM == 0)
+		    	cout<<parentPidEP<<" "<<dcaPair<<" "<<decayLMc<<" "<<decayL<<" "<<rcPairM <<" "<<mcPair.M()<<endl;
 		}
 	    }
 

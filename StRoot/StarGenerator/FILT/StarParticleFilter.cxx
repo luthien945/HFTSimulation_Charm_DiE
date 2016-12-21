@@ -21,6 +21,7 @@ int StarParticleFilter::Filter( StarGenEvent *_event )
 
   // Loop over tracks to find particles of interest
   int npart = event.GetNumberOfParticles();
+  int ncharm = 0;
   for ( int ipart=1 /*skip header*/; 
 	ipart<npart; 
 	ipart++ )
@@ -32,7 +33,8 @@ int StarParticleFilter::Filter( StarGenEvent *_event )
 
       TLorentzVector momentum = part->momentum();
       double pT  = momentum.Perp();
-      if ( pT < 0.05 ) continue;
+      double p   = momentum.P();
+      if ( pT<1e-4 || p<1e-4 ) continue;
       double eta = momentum.Eta();
 
       for ( auto trig : mTriggers )
@@ -42,9 +44,7 @@ int StarParticleFilter::Filter( StarGenEvent *_event )
 	  if ( pT  > trig.ptmx && trig.ptmn < trig.ptmx ) continue;
 	  if ( eta < trig.etamn )                         continue;
 	  if ( eta > trig.etamx )                         continue;
-	  return StarGenEvent::kAccept;	  
 	}
-
     }
 
   return StarGenEvent::kReject;

@@ -81,6 +81,17 @@ int histClass::initHist() {
     hMc_DcaZVsPhi  = new TH2F("hMc_DcaZVsPhi"  , "" , 500 , -0.25, 0.25 , 360 , 0    , 2*PI );
     hMc_DcaZVsEta  = new TH2F("hMc_DcaZVsEta"  , "" , 500 , -0.25, 0.25 , 240 , -1.2 , 1.2  );
 
+    TString lazy;
+    char *name[4] = {"Electron", "Pion", "Kaon", "Proton"};
+    for(int i=0; i<4; i++) {
+	lazy.Form("hDcaXYVsPt_%s", name[i]);
+	hDcaXYVsPt[i] = new TH2F(lazy.Data(), "", 500, -0.1, 0.1, 200, 0, 5);
+	lazy.Form("hDcaZVsPt_%s", name[i]);
+	hDcaZVsPt[i]  = new TH2F(lazy.Data(), "", 500, -0.1, 0.1, 200, 0, 5);
+	lazy.Form("hDcaVsPt_%s", name[i]);
+	hDcaVsPt[i]   = new TH2F(lazy.Data(), "", 500, 0, 0.1, 200, 0, 5);
+    }
+
 
     hMc_PtVsPhi             = new TH2F("hMc_PtVsPhi"             , "" , 300 , -6.  , 6.  , 360 , 0 , 2*PI );
     hMc_EtaVsPhi            = new TH2F("hMc_EtaVsPhi"            , "" , 240 , -1.2 , 1.2 , 360 , 0 , 2*PI );
@@ -93,21 +104,29 @@ int histClass::initHist() {
     hRc_charm_PtVsHFTMatch  = new TH2F("hRc_charm_PtVsHFTMatch"  , "" , 300 , 0    , 6.  , 8   , 0 , 8    );
 
 
-    hRc_incl_DcaVsPt    = new TH2F("hRc_incl_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hRc_incl_DcaXYVsPt  = new TH2F("hRc_incl_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hRc_incl_DcaZVsPt   = new TH2F("hRc_incl_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hMc_incl_DcaVsPt    = new TH2F("hMc_incl_DcaVsPt"     , "" , 500 , 0    , 0.1 , 200 , 0 , 5. );
+    hMc_incl_DcaXYVsPt  = new TH2F("hMc_incl_DcaXYVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+    hMc_incl_DcaZVsPt   = new TH2F("hMc_incl_DcaZVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
 
-    hMc_incl_DcaVsPt    = new TH2F("hMc_incl_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hMc_incl_DcaXYVsPt  = new TH2F("hMc_incl_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hMc_incl_DcaZVsPt   = new TH2F("hMc_incl_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hMc_charm_DcaVsPt    = new TH2F("hMc_charm_DcaVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+    hMc_charm_DcaXYVsPt  = new TH2F("hMc_charm_DcaXYVsPt" , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+    hMc_charm_DcaZVsPt   = new TH2F("hMc_charm_DcaZVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
 
-    hRc_charm_DcaVsPt    = new TH2F("hRc_charm_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hRc_charm_DcaXYVsPt  = new TH2F("hRc_charm_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hRc_charm_DcaZVsPt   = new TH2F("hRc_charm_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hRc_incl_DcaVsPt    = new TH2F("hRc_incl_DcaVsPt"     , "" , 500 , 0    , 0.1 , 200 , 0 , 5. );
+    hRc_incl_DcaXYVsPt  = new TH2F("hRc_incl_DcaXYVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+    hRc_incl_DcaZVsPt   = new TH2F("hRc_incl_DcaZVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
 
-    hMc_charm_DcaVsPt    = new TH2F("hMc_charm_DcaVsPt"    , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hMc_charm_DcaXYVsPt  = new TH2F("hMc_charm_DcaXYVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
-    hMc_charm_DcaZVsPt   = new TH2F("hMc_charm_DcaZVsPt"   , "" , 500 , -0.1 , 0.1 , 200 , 0    , 6.   );
+    hRc_charm_DcaVsPt    = new TH2F("hRc_charm_DcaVsPt"   , "" , 500 , 0    , 0.1 , 200 , 0 , 5. );
+    hRc_charm_DcaXYVsPt  = new TH2F("hRc_charm_DcaXYVsPt" , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+    hRc_charm_DcaZVsPt   = new TH2F("hRc_charm_DcaZVsPt"  , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+
+    hRc_incl_DcaVsPt_TrueM    = new TH2F("hRc_incl_DcaVsPt_TrueM"    , "" , 500 , 0    , 0.1 , 200 , 0 , 5. );
+    hRc_incl_DcaXYVsPt_TrueM  = new TH2F("hRc_incl_DcaXYVsPt_TrueM"  , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+    hRc_incl_DcaZVsPt_TrueM   = new TH2F("hRc_incl_DcaZVsPt_TrueM"   , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+
+    hRc_charm_DcaVsPt_TrueM   = new TH2F("hRc_charm_DcaVsPt_TrueM"   , "" , 500 , 0    , 0.1 , 200 , 0 , 5. );
+    hRc_charm_DcaXYVsPt_TrueM = new TH2F("hRc_charm_DcaXYVsPt_TrueM" , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
+    hRc_charm_DcaZVsPt_TrueM  = new TH2F("hRc_charm_DcaZVsPt_TrueM"  , "" , 500 , -0.1 , 0.1 , 200 , 0 , 5. );
 
     if(!mList) cout<<"no list"<<endl;
 
@@ -182,7 +201,21 @@ int histClass::initHist() {
     mList->Add(hMc_charm_DcaXYVsPt );
     mList->Add(hMc_charm_DcaZVsPt  );
 
+    mList->Add(hRc_incl_DcaVsPt_TrueM);
+    mList->Add(hRc_charm_DcaVsPt_TrueM);
 
+
+    mList->Add(hRc_incl_DcaXYVsPt_TrueM);
+    mList->Add(hRc_charm_DcaXYVsPt_TrueM);
+
+    mList->Add(hRc_incl_DcaZVsPt_TrueM);
+    mList->Add(hRc_charm_DcaZVsPt_TrueM);
+
+    for(int i=0; i<4; i++) {
+	mList->Add(hDcaVsPt[i]);
+	mList->Add(hDcaXYVsPt[i]);
+	mList->Add(hDcaZVsPt[i]);
+    }
     return 1;
 }
 

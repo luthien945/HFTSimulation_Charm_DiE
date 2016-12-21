@@ -52,6 +52,7 @@ class StMyAnalysisMaker : public StMaker {
 	int  loopMcTrack();
 	int  loopMcVertex();
 	void makePair();
+	bool isTrueMatch(StPicoMcTrack const * const trk);
 	int  getParent(StPicoMcTrack const * const mcTrk, bool doTraceUp);
 	int  getRcTrack(StPicoMcTrack const * const mcTrk);
 	int  mcFilterAndGharge(int gePid);

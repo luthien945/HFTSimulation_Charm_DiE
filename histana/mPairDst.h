@@ -1,13 +1,12 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Mon Nov 21 20:57:21 2016 by ROOT version 5.34/30
+// Mon Nov 28 13:44:50 2016 by ROOT version 5.34/30
 // from TTree mPairDst/mPairDst
 // found on file: ../hadd/charm_hijing_pythia6.root
 //////////////////////////////////////////////////////////
 
 #ifndef mPairDst_h
 #define mPairDst_h
-#define MAX_N_PAIR 500
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -15,6 +14,7 @@
 
 // Header file for the classes stored in the TTree if any.
 #include <TObject.h>
+#define MAX_N_PAIR 500
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
@@ -29,6 +29,8 @@ public :
    UInt_t          fBits;
    Float_t         BField;
    Int_t           nPairs;
+   Float_t         decayLMc[MAX_N_PAIR];   //[nPairs]
+   Float_t         parDisMc[MAX_N_PAIR];   //[nPairs]
    Float_t         decayL[MAX_N_PAIR];   //[nPairs]
    Float_t         dcaV0[MAX_N_PAIR];   //[nPairs]
    Float_t         dcaPair[MAX_N_PAIR];   //[nPairs]
@@ -71,6 +73,8 @@ public :
    TBranch        *b_mPairDst_fBits;   //!
    TBranch        *b_mPairDst_BField;   //!
    TBranch        *b_mPairDst_nPairs;   //!
+   TBranch        *b_decayLMc;   //!
+   TBranch        *b_parDisMc;   //!
    TBranch        *b_decayL;   //!
    TBranch        *b_dcaV0;   //!
    TBranch        *b_dcaPair;   //!
@@ -182,6 +186,8 @@ void mPairDst::Init(TTree *tree)
    fChain->SetBranchAddress("fBits", &fBits, &b_mPairDst_fBits);
    fChain->SetBranchAddress("BField", &BField, &b_mPairDst_BField);
    fChain->SetBranchAddress("nPairs", &nPairs, &b_mPairDst_nPairs);
+   fChain->SetBranchAddress("decayLMc", decayLMc, &b_decayLMc);
+   fChain->SetBranchAddress("parDisMc", parDisMc, &b_parDisMc);
    fChain->SetBranchAddress("decayL", decayL, &b_decayL);
    fChain->SetBranchAddress("dcaV0", dcaV0, &b_dcaV0);
    fChain->SetBranchAddress("dcaPair", dcaPair, &b_dcaPair);

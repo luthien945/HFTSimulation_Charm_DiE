@@ -20,9 +20,12 @@ class StarParticleFilter;
 
 class StarPythia6;
 
+TRandom3 *mRandom;
+
 TF1 *ptDist_flat10  = 0;
 TF1 *ptDist_flat20  = 0;
 TF1 *ptDist_flat30  = 0;
+TF1 *ptDist_expo    = 0;
 TF1 *yDist = 0;
 
 //Initialize the settings:
@@ -97,8 +100,17 @@ void trig( Int_t n=0, Int_t mode)
     for ( Int_t i=1; i<n+1; i++ ) {
 	chain->Clear();
 	vertex(i, mode);
-	//if(mode == 3) kinematics->Dist(10, "MyD0bar", ptDist_flat10, yDist);
-	//if(mode == 3) kinematics->Dist(10, "MyD0" , ptDist_flat10, yDist);
+	if(mode == 3) kinematics->Dist(10, "MyD0bar", ptDist_flat10, yDist);
+	if(mode == 3) kinematics->Dist(10, "MyD0" , ptDist_flat10, yDist);
+
+	if(mode == 4) {
+	    kinematics->Dist(10, "e+", ptDist_expo, yDist);
+	    kinematics->Dist(10, "e-", ptDist_expo, yDist);
+	    //int nRef = (int) 200 * mRandom->Rndm();
+	    //cout<<"YiSaid : input "<<nRef<<" pi+/-"<<endl;
+	    //kinematics->Dist(nRef, "pi+", ptDist_flat10, yDist);
+	    //kinematics->Dist(nRef, "pi-", ptDist_flat10, yDist);
+	}
 	chain->Make();
 	_primary->event()->Print();
 	if(i==1) command("gprint kine");
@@ -342,10 +354,13 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 { 
     bool decayOutSidePythia = kTRUE;
     bool doDalitz = kFALSE;
+    mRandom = new TRandom3();
+    mRandom->SetSeed(0);
 
     gROOT->ProcessLine(".L bfc.C");
     {
 	TString simple = "y2014a geant gstar usexgeom agml ";
+	//if(mode == 0) simple.Form("tables nodefault");
 	bfc(0, simple );
     }
 
@@ -395,8 +410,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //_primary -> SetVertex( vx,vy,vz );
     //_primary -> SetSigma( vx_sig,vy_sig,vz_sig );
 
-
-
+    myKine();
 
     switch(mode) {
 	// Setup pythia 
@@ -420,21 +434,23 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    break;
 	case 3 :
 	    cout<<"YiSaid : Running at Kine+Hijing mode"<<endl;
-	    myKine();
 	    Hijing(decayOutSidePythia);
 	    break;
-	//case 4 :
-	//    cout<<"YiSaid : Running at Hijing Standalone mode"<<endl; 
-	//    Hijing();
-	//    break; 
-	//case 5 : 
-	//    cout<<"YiSaid : Running at Pythia6+StarGenEventReader mode"<<endl;
-	//    TString infilename;
-	//    infilename.Form(inPythia6File);
-	//    myPythia6(decayOutSidePythia);
-	//    myFilter(0);
-	//    myEventReader(infilename);
-	//    break;
+	case 4 :
+	    cout<<"YiSaid : Running at Pythia + Kine mode"<<endl;
+	    TString infilename;
+	    infilename.Form(inPythia6File);
+	    myEventReader(infilename);
+	    Hijing(decayOutSidePythia);
+	    break; 
+	    //case 5 : 
+	    //    cout<<"YiSaid : Running at Pythia6+StarGenEventReader mode"<<endl;
+	    //    TString infilename;
+	    //    infilename.Form(inPythia6File);
+	    //    myPythia6(decayOutSidePythia);
+	    //    myFilter(0);
+	    //    myEventReader(infilename);
+	    //    break;
 	default :
 	    cout<<"YiSaid : You must choose a mode!"<<endl;
 	    cout<<"0 for Pythia6" << endl;
@@ -445,8 +461,8 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     }
 
 
-    if(decayOutSidePythia && mode != 0 && mode != 4){
-    //if(decayOutSidePythia){
+    if(decayOutSidePythia && mode != 0){
+	//if(decayOutSidePythia){
 	myDecayer();
 	// Particle data
 	StarParticleData& data = StarParticleData::instance();
@@ -477,7 +493,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //
     //geometry("y2014");
     command("gkine -4 0");
-    if(mode !=0) command(fzname);
+    if(mode != 0) command(fzname);
     //command(fzname);
 
     //Double_t pt0 = 3.0;
@@ -485,8 +501,8 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //ptDist->SetParameter(0, pt0);
     //ptDist->Draw();
     //Exponential
-    //ptDist = new TF1("ptDist","[0]*x*TMath::Exp(-x/[1])",minPt,maxPt); //dN/pT/dpT is exp 
-    //ptDist->SetParameters(1.,1.);//slope = 1.;
+    ptDist_expo = new TF1("ptDist","[0]*x*TMath::Exp(-x/[1])",0.1,10); //dN/pT/dpT is exp 
+    ptDist_expo->SetParameters(1.,1.);//slope = 1.;
     //Low pT optimized
     //ptDist = new TF1("ptDist","[0]+[1]*x+[2]*x^2",minPt,maxPt); //dN/pT/dpT is exp 
     //ptDist->SetParameters(0.975923,-0.00841225,-0.0185871);

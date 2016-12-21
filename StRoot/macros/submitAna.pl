@@ -14,6 +14,7 @@ my $submit = "/scheduler/submit";
 $Dir =~ s/$submit//;
 print "my Dir: $Dir\n";
 my $Simu = $Dir."/Simu_out/PicoDst_Run*/*.picoDst.root";
+#my $Simu = $Dir."/Simu_out/PicoDst_Single_Particle/*.picoDst.root";
 my $OutDir = $Dir."/scheduler/output";
 $glb = $Simu;
 print "Macro : $macro\n";

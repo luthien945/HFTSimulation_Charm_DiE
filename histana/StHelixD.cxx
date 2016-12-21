@@ -436,117 +436,104 @@ StHelixD::pathLengths(const StHelixD& h) const
     //
     //   Second step: scan in decreasing intervals around seed 's'
     // 
-    //const double MinStepSize = 10*micrometer;
-    //const double MinRange    = 10*centimeter;    
-    //double dmin              = h.distance(at(s));
-    //double range             = 2*dmin > MinRange ? 2*dmin : MinRange;
-    //s1                       = s - range/2.;
-    //s2                       = s + range/2.;
-    //double ds                = range/10;
-    //double slast=999999, ss, d;
+    const double MinStepSize = 10*micrometer;
+    const double MinRange    = 10*centimeter;    
+    double dmin              = h.distance(at(s));
+    double range             = 2*dmin > MinRange ? 2*dmin : MinRange;
+    s1                       = s - range/2.;
+    s2                       = s + range/2.;
+    double ds                = range/10;
+    double slast=999999, ss, d;
     
-		double MinStepSize = 500*micrometer;
-		const double MinRange    = 10*centimeter;    
-		double dmin              = h.distance(at(s));
-
-		if(dmin > 5.) {
-			return pairD(-999999.,-999999.);
-		}
-		double range             = 2*dmin>MinRange ? 2*dmin : MinRange;
-		double ds                = range/10;
-		double slast=-999999, ss, d;
-		s1 = s - range/2.;
-		s2 = s + range/2.;	
-		
-		while (ds > MinStepSize && ds < 1.e+10) {
-			for (ss=s1; ss<s2+ds; ss+=ds) {
-				d = h.distance(at(ss));
-				if (d < dmin) {
-					dmin = d;
-					s = ss;
-				}
-				slast = ss;
-			}
-			//
-			//  In the rare cases where the minimum is at the
-			//  the border of the current range we shift the range
-			//  and start all over, i.e we do not decrease 'ds'.
-			//  Else we decrease the search intervall around the
-			//  current minimum and redo the scan in smaller steps.
-			//
-			if (s == s1) {
-				d = 0.8*(s2-s1);
-				s1 -= d;
-				s2 -= d;
-			}
-			else if (s == slast) {
-				d = 0.8*(s2-s1);
-				s1 += d;
-				s2 += d;
-			}
-			else {           
-				s1 = s-ds;
-				s2 = s+ds;
-				ds /= 10;
-			}
-		}
-		if(ds > 1.e+10) return pairD(NoSolution, NoSolution);
-		return pairD(s, h.pathLength(at(s)));
+    while (ds > MinStepSize && ds < 1.e+10) {
+      for (ss=s1; ss<s2+ds; ss+=ds) {
+	d = h.distance(at(ss));
+	if (d < dmin) {
+	  dmin = d;
+	  s = ss;
 	}
+	slast = ss;
+      }
+      //
+      //  In the rare cases where the minimum is at the
+      //  the border of the current range we shift the range
+      //  and start all over, i.e we do not decrease 'ds'.
+      //  Else we decrease the search intervall around the
+      //  current minimum and redo the scan in smaller steps.
+      //
+      if (s == s1) {
+	d = 0.8*(s2-s1);
+	s1 -= d;
+	s2 -= d;
+      }
+      else if (s == slast) {
+	d = 0.8*(s2-s1);
+	s1 += d;
+	s2 += d;
+      }
+      else {           
+	s1 = s-ds;
+	s2 = s+ds;
+	ds /= 10;
+      }
+    }
+    if(ds > 1.e+10) return pairD(NoSolution, NoSolution);
+    return pairD(s, h.pathLength(at(s)));
+  }
 }
 
 int StHelixD::valid(double WorldSize) const
 {
-
-	if (!::finite(mDipAngle    )) 	return 0;
-	if (!::finite(mH           )) 	return 0;
-	if (!::finite(mCurvature   )) 	return 0;
-	if (::fabs(mCurvature) > WorldSize)	return 0;
-
-	//  if (!mOrigin.valid(WorldSize))      return 0;
-	for(int i=0;i<3;i++) {
-		if(!::finite(mOrigin[i])) return 0;
-		if(::fabs(mOrigin[i])>WorldSize) return 0;
-	}
-	double qwe = ::fabs(::fabs(mDipAngle)-M_PI/2);
-	if (qwe < 1./WorldSize      ) 	return 0; 
-	if (fabs(mH) != 1            )       return 0; 
-	if (mCurvature < 0          )	return 0;
-
-	return 1;
+  
+  if (!::finite(mDipAngle    )) 	return 0;
+  if (!::finite(mH           )) 	return 0;
+  if (!::finite(mCurvature   )) 	return 0;
+  if (::fabs(mCurvature) > WorldSize)	return 0;
+  
+  //  if (!mOrigin.valid(WorldSize))      return 0;
+  for(int i=0;i<3;i++) {
+    if(!::finite(mOrigin[i])) return 0;
+    if(::fabs(mOrigin[i])>WorldSize) return 0;
+  }
+  double qwe = ::fabs(::fabs(mDipAngle)-M_PI/2);
+  if (qwe < 1./WorldSize      ) 	return 0; 
+  if (fabs(mH) != 1            )       return 0; 
+  if (mCurvature < 0          )	return 0;
+  
+  return 1;
 }
 
 void StHelixD::moveOrigin(double s)
 {
-	if (mSingularity)
-		mOrigin	= at(s);
-	else {
-		TVector3 newOrigin = at(s);
-		double newPhase = atan2(newOrigin.y() - ycenter(),
-				newOrigin.x() - xcenter());
-		mOrigin = newOrigin;
-		setPhase(newPhase);	        
-	}
+  if (mSingularity)
+    mOrigin	= at(s);
+  else {
+    TVector3 newOrigin = at(s);
+    double newPhase = atan2(newOrigin.y() - ycenter(),
+			    newOrigin.x() - xcenter());
+    mOrigin = newOrigin;
+    setPhase(newPhase);	        
+  }
 }
 
 int operator== (const StHelixD& a, const StHelixD& b)
 {
-	//
-	// Checks for numerical identity only !
-	//
-	return (a.origin()    == b.origin()    &&
-			a.dipAngle()  == b.dipAngle()  &&
-			a.curvature() == b.curvature() &&
-			a.phase()     == b.phase()     &&
-			a.h()         == b.h());
+  //
+  // Checks for numerical identity only !
+  //
+  return (a.origin()    == b.origin()    &&
+	  a.dipAngle()  == b.dipAngle()  &&
+	  a.curvature() == b.curvature() &&
+	  a.phase()     == b.phase()     &&
+	  a.h()         == b.h());
 }
 
 int operator!= (const StHelixD& a, const StHelixD& b) {return !(a == b);}
 
 ostream& operator<<(ostream& os, const StHelixD& h)
 {
-	return os << " helix : -- ";
-	/*
+  return os << " helix : -- ";
+  /*
 	    << "curvature = "  << h.curvature() << ", " 
 	    << "dip angle = "  << h.dipAngle()  << ", "
 	    << "phase = "      << h.phase()     << ", "  

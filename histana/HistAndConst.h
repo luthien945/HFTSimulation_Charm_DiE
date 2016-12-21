@@ -61,5 +61,9 @@ TH2F *hDcaV0VsMassMeson;
 TH2F *hOpenAngleVsMassCharm;
 TH2F *hOpenAngleVsMassMeson;
 
-float dcaCuts[6] = {0.03,0.04,0.05,0.06,0.07,0.08};
-float dcaPairCuts[10] = {0.005,0.01,0.015,0.02,0.025,0.03,0.035,0.04,0.045,0.05};
+TH1F *htmC = NULL;
+TH1F *htmM = NULL;
+
+float dcaCuts[10] = {0.005,0.006,0.007,0.008,0.009,0.01,0.011,0.012,0.013,0.014};
+//float dcaPairCuts[10] = {0.005,0.01,0.015,0.02,0.025,0.03,0.035,0.04,0.045,0.05};
+float dcaPairCuts[10] = {0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01};

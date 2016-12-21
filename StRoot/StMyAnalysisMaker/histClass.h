@@ -73,6 +73,10 @@ class histClass {
 
 	TH2F *hPtVsDiffPt ;
 
+	TH2F *hDcaVsPt[4];
+	TH2F *hDcaXYVsPt[4];
+	TH2F *hDcaZVsPt[4];
+
 	// HFT match test
 	TH2F *hMc_PtVsPhi;
 	TH2F *hMc_EtaVsPhi;
@@ -98,6 +102,7 @@ class histClass {
 	TH2F *hMc_charm_DcaZVsPt;
 
 	TH2F *hRc_NevsNp;
+
 	TH2F *hRc_incl_DcaVsPt;
 	TH2F *hRc_charm_DcaVsPt;
 
@@ -106,6 +111,15 @@ class histClass {
 
 	TH2F *hRc_incl_DcaZVsPt;
 	TH2F *hRc_charm_DcaZVsPt;
+
+	TH2F *hRc_incl_DcaVsPt_TrueM;
+	TH2F *hRc_charm_DcaVsPt_TrueM;
+
+	TH2F *hRc_incl_DcaXYVsPt_TrueM;
+	TH2F *hRc_charm_DcaXYVsPt_TrueM;
+
+	TH2F *hRc_incl_DcaZVsPt_TrueM;
+	TH2F *hRc_charm_DcaZVsPt_TrueM;
 
 	// pair 
 	TH1F *hPairMass;
