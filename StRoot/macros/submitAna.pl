@@ -13,8 +13,20 @@ my $Dir = Cwd::cwd();
 my $submit = "/scheduler/submit"; 
 $Dir =~ s/$submit//;
 print "my Dir: $Dir\n";
-my $Simu = $Dir."/Simu_out/PicoDst_Run*/*.picoDst.root";
-#my $Simu = $Dir."/Simu_out/PicoDst_Single_Particle/*.picoDst.root";
+
+my %ARG = (files => '*.root',
+	FilesPerJob => '40',
+	);
+while (@ARGV) {
+    $_ = shift @ARGV;
+    if ($_ =~ /=/) { my($key, $val) = /([^=]*)=(.*)/; $ARG{$key} = $val;}
+}
+while (my($key, $val) = each %ARG) {
+    print  "$key=$val\n"; 
+}
+
+my $Simu = $Dir."/".$ARG{files};
+my $FilesPerJob = $ARG{FilesPerJob};
 my $OutDir = $Dir."/scheduler/output";
 $glb = $Simu;
 print "Macro : $macro\n";
@@ -22,10 +34,6 @@ print "glb=$glb\n";
 my @Files = glob "$glb";
 print "#Files : $#Files+1\n";
 print "outDir : $OutDir\n";
-my $FilesPerJob = 300;
-#if($FilesPerJob < ($#Files+1)/$mSplit) {
-#    $FilesPerJob = ($#Files+1)/$mSplit+1; 
-#}
 print "FilesPerJob = $FilesPerJob\n";
 
 my $submit = "submitAna_".$mEnergy."\.xml";
@@ -45,39 +53,39 @@ my $OutName ;
 my $log     ;
 my $csh     ;
 foreach my $file (@Files){
-	chomp $file;
-	print "$file\n";
-	if($ctr == 0 ) {
-	    $LISTNAME = $Dir."/scheduler/submit/job_$listctr.list";
-	    $OutName  = $OutDir."/job_$listctr.root";
-	    $log      = $OutDir."/job_$listctr.log";
-	    $csh      = $Dir."/scheduler/submit/job_$listctr.csh";
-	    print "Create list $LISTNAME !!\n";
-	    open LIST, ">$LISTNAME";
-	    $listctr += 1;
-	}
+    chomp $file;
+    print "$file\n";
+    if($ctr == 0 ) {
+	$LISTNAME = $Dir."/scheduler/submit/job_$listctr.list";
+	$OutName  = $OutDir."/job_$listctr.root";
+	$log      = $OutDir."/job_$listctr.log";
+	$csh      = $Dir."/scheduler/submit/job_$listctr.csh";
+	print "Create list $LISTNAME !!\n";
+	open LIST, ">$LISTNAME";
+	$listctr += 1;
+    }
 
-	print LIST "$file\n";
-	$ctr += 1;
+    print LIST "$file\n";
+    $ctr += 1;
 
-	if($ctr >= $FilesPerJob) {
-	    open CSH ,">$csh";
-	    my $cmdline = "root.exe -b -l \'$macro(\"$LISTNAME\",\"$OutName\")\'>& $log";
-	    print "$cmdline\n";
-	    print CSH "#!/bin/tcsh \n";
-	    print CSH "starver $STAR_LEVEL\n";
-	    print CSH "cd $Dir\n";
-	    print CSH "if( ! -d $OutDir ) then\n";
-	    print CSH "mkdir -p $OutDir\n";
-	    print CSH "endif\n";
-	    print CSH "if( -e $log) then\n";
-	    print CSH "rm -f $log\n";
-	    print CSH "endif\n";
-	    print CSH "$cmdline\n";
-	    print XML "<input URL=\"file:$csh\"/>\n";
-	    print RUNNUM "@ss[0],";
-	    $ctr = 0;
-	}
+    if($ctr >= $FilesPerJob) {
+	open CSH ,">$csh";
+	my $cmdline = "root.exe -b -l \'$macro(\"$LISTNAME\",\"$OutName\")\'>& $log";
+	print "$cmdline\n";
+	print CSH "#!/bin/tcsh \n";
+	print CSH "starver $STAR_LEVEL\n";
+	print CSH "cd $Dir\n";
+	print CSH "if( ! -d $OutDir ) then\n";
+	print CSH "mkdir -p $OutDir\n";
+	print CSH "endif\n";
+	print CSH "if( -e $log) then\n";
+	print CSH "rm -f $log\n";
+	print CSH "endif\n";
+	print CSH "$cmdline\n";
+	print XML "<input URL=\"file:$csh\"/>\n";
+	print RUNNUM "@ss[0],";
+	$ctr = 0;
+    }
 }
 # write the last list
 open CSH ,">$csh";

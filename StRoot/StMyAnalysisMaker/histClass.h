@@ -73,9 +73,14 @@ class histClass {
 
 	TH2F *hPtVsDiffPt ;
 
-	TH2F *hDcaVsPt[4];
-	TH2F *hDcaXYVsPt[4];
-	TH2F *hDcaZVsPt[4];
+	// 0-e 1-pi 2-k 3-p
+	TH2F *hDcaVsPt_Pos[4];
+	TH2F *hDcaXYVsPt_Pos[4];
+	TH2F *hDcaZVsPt_Pos[4];
+
+	TH2F *hDcaVsPt_Neg[4];
+	TH2F *hDcaXYVsPt_Neg[4];
+	TH2F *hDcaZVsPt_Neg[4];
 
 	// HFT match test
 	TH2F *hMc_PtVsPhi;

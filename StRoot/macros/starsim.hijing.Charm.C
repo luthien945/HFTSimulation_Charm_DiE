@@ -92,7 +92,7 @@ void vertex(int i, int mode)
 	<<std::setw(5)<<vz<<"]"<<endl;
     _primary->SetVertex(vx,vy,vz);
     _primary->SetSigma ( 0, 0, 0);
-};
+}
 // ----------------------------------------------------------------------------
 void trig( Int_t n=0, Int_t mode)
 {
@@ -119,8 +119,6 @@ void trig( Int_t n=0, Int_t mode)
 // ----------------------------------------------------------------------------
 void myKine()
 { 
-    gSystem->Load("libKinematics.so");
-    kinematics = new StarKinematics();  
     _primary -> AddGenerator(kinematics);
 }
 
@@ -235,7 +233,7 @@ void Hijing(bool decayMode = kFALSE)
     //hijing->SetImpact(0.0, 30.0);       // Impact parameter min/max (fm)    0.   30.
     //hijing->SetImpact(0.0, 4.5);       // 0-10% central
     hijing->SetImpact(0.0, 20.);       // 0-80% central
-    
+
     hijing->hiparnt().ihpr2(4) = 0;     // Jet quenching (1=yes/0=no)       0
     hijing->hiparnt().ihpr2(3) = 0;     // Hard scattering (1=yes/0=no)
     hijing->hiparnt().hipr1(10) = 2.0;  //    pT jet
@@ -371,7 +369,9 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     gSystem->Load( "StarGeneratorBase.so" );
     gSystem->Load( "libMathMore.so"   );  
     gSystem->Load( "xgeometry.so"     );
+    gSystem->Load( "libKinematics.so");
 
+    kinematics = new StarKinematics();  
     //gMessMgr->SetLevel(999);
 
     // force gstar load/call
@@ -410,7 +410,6 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //_primary -> SetVertex( vx,vy,vz );
     //_primary -> SetSigma( vx_sig,vy_sig,vz_sig );
 
-    myKine();
 
     switch(mode) {
 	// Setup pythia 
@@ -434,23 +433,14 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    break;
 	case 3 :
 	    cout<<"YiSaid : Running at Kine+Hijing mode"<<endl;
+	    myKine();
 	    Hijing(decayOutSidePythia);
 	    break;
 	case 4 :
 	    cout<<"YiSaid : Running at Pythia + Kine mode"<<endl;
-	    TString infilename;
-	    infilename.Form(inPythia6File);
-	    myEventReader(infilename);
+	    myKine();
 	    Hijing(decayOutSidePythia);
 	    break; 
-	    //case 5 : 
-	    //    cout<<"YiSaid : Running at Pythia6+StarGenEventReader mode"<<endl;
-	    //    TString infilename;
-	    //    infilename.Form(inPythia6File);
-	    //    myPythia6(decayOutSidePythia);
-	    //    myFilter(0);
-	    //    myEventReader(infilename);
-	    //    break;
 	default :
 	    cout<<"YiSaid : You must choose a mode!"<<endl;
 	    cout<<"0 for Pythia6" << endl;
@@ -461,8 +451,8 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     }
 
 
-    if(decayOutSidePythia && mode != 0){
-	//if(decayOutSidePythia){
+    if(decayOutSidePythia && mode != 0)
+    {
 	myDecayer();
 	// Particle data
 	StarParticleData& data = StarParticleData::instance();
@@ -485,8 +475,6 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //
     //_primary -> SetCuts( 1.0E-6 , -1., -2.6, 2.6 );
     _primary -> Init();
-
-
 
     //
     // Setup geometry and set starsim to use agusread for input
@@ -528,7 +516,6 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     // Trigger on nevents
     //
     trig( nevents, mode );
-
 
     //  command("gprint kine");
 

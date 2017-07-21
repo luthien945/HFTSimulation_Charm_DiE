@@ -1,6 +1,9 @@
 #!/bin/bash
 date
-starver SL16d
+
+mystarver=new
+starver $mystarver
+echo "working under STAR_LEVEL $STAR_LEVEL"
 
 rm -rf *session*
 

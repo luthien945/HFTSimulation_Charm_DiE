@@ -29,37 +29,37 @@ const float PI = TMath::Pi();
 
 TH2F *hMassVsParentMc;
 TH2F *hMassVsParentRc;
-TH2F *hDecayLVsParent;
-TH2F *hDcaPairVsParent;
-TH2F *hDca1XYVsParent;
-TH2F *hDca1ZVsParent;
-TH2F *hDca1VsParent;
-TH2F *hDca2XYVsParent;
-TH2F *hDca2ZVsParent;
-TH2F *hDca2VsParent;
+//TH2F *hDecayLVsParent;
+//TH2F *hDcaPairVsParent;
+//TH2F *hDca1XYVsParent;
+//TH2F *hDca1ZVsParent;
+//TH2F *hDca1VsParent;
+//TH2F *hDca2XYVsParent;
+//TH2F *hDca2ZVsParent;
+//TH2F *hDca2VsParent;
+//
+//TH2F *hDca1VsParentPt1;
+//TH2F *hDca2VsParentPt1;
+//TH2F *hDca1VsParentPt2;
+//TH2F *hDca2VsParentPt2;
+//TH2F *hDca1VsParentPt3;
+//TH2F *hDca2VsParentPt3;
 
-TH2F *hDca1VsParentPt1;
-TH2F *hDca2VsParentPt1;
-TH2F *hDca1VsParentPt2;
-TH2F *hDca2VsParentPt2;
-TH2F *hDca1VsParentPt3;
-TH2F *hDca2VsParentPt3;
+TH2F *hDcaVsPt[10]   ;
+TH2F *hDcaXYVsPt[10] ;
+TH2F *hDcaZVsPt[10]  ;
+TH2F *hDcaPairVsMass[10];
+TH2F *hDecayLVsMass[10];
+TH2F *hDcaV0VsMass[10];
+TH2F *hOpenAngleVsMass[10];
 
-TH2F *hDcaVsPtCharm   ;
-TH2F *hDcaVsPtMeson   ;
-TH2F *hDcaXYVsPtCharm ;
-TH2F *hDcaXYVsPtMeson ;
-TH2F *hDcaZVsPtCharm  ;
-TH2F *hDcaZVsPtMeson  ;
-
-TH2F *hDcaPairVsMassCharm;
-TH2F *hDcaPairVsMassMeson;
-TH2F *hDecayLVsMassCharm;
-TH2F *hDecayLVsMassMeson;
-TH2F *hDcaV0VsMassCharm;
-TH2F *hDcaV0VsMassMeson;
-TH2F *hOpenAngleVsMassCharm;
-TH2F *hOpenAngleVsMassMeson;
+//TH2F *hDcaVsPtMeson   ;
+//TH2F *hDcaXYVsPtMeson ;
+//TH2F *hDcaZVsPtMeson  ;
+//TH2F *hDcaPairVsMassMeson;
+//TH2F *hDecayLVsMassMeson;
+//TH2F *hDcaV0VsMassMeson;
+//TH2F *hOpenAngleVsMassMeson;
 
 TH1F *htmC = NULL;
 TH1F *htmM = NULL;

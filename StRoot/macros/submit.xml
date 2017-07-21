@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <job filesPerHour="1" nProcesses="&nRuns;"  simulateSubmission="false">
   <command>
-    starver SL16d
+    starver new
 
-    ./run.sh ${JOBID}
+    ./run.sh ${JOBID} 6
 
   </command>
 

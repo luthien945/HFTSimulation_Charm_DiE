@@ -217,7 +217,7 @@ int StMyAnalysisMaker::loopMcTrack() {
 	StThreeVectorF startVertex = mcTrk->Origin();
 	StThreeVectorF pVtxMc = mPicoDst->mcevent()->pVertex();
 	bool isPrimary = kFALSE;
-	if(abs(startVertex-pVtxMc)<1e-5) isPrimary = kTRUE;
+	if((startVertex-pVtxMc).mag()<1e-8) isPrimary = kTRUE;
 	//cout<<itMc<<" "<<mcTrk->mcId()<<endl;
 	int gePid = mcTrk->GePid();
 	int parentId = getParent(mcTrk, kFALSE);
@@ -261,7 +261,7 @@ int StMyAnalysisMaker::loopMcTrack() {
 
 	if(gePid>=cuts::parentGidCut1 && gePid<=cuts::parentGidCut2) {
 	    mHist->hPid_CharmPid->Fill(gePid);
-	    //cout<<"Charmed : "<<gePid<<endl;
+	    cout<<"Charmed : "<<gePid<<endl;
 	    nCharmMesons++;
 	}
 
@@ -433,25 +433,46 @@ int StMyAnalysisMaker::loopMcTrack() {
 		    }
 		}
 		if(isHFTM && isPrimary) {
-		    if(gePid == 2 || gePid == 3) {
-			mHist->hDcaVsPt[0]->Fill(rcDca, rcGPt);
-			mHist->hDcaXYVsPt[0]->Fill(rcDcaXY, rcGPt);
-			mHist->hDcaZVsPt[0]->Fill(rcDcaZ, rcGPt);
+		    if(gePid == 2) {
+			mHist->hDcaVsPt_Pos[0]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Pos[0]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Pos[0]->Fill(rcDcaZ, rcGPt);
 		    }
 		    if(gePid == 8 || gePid == 9) {
-			mHist->hDcaVsPt[1]->Fill(rcDca, rcGPt);
-			mHist->hDcaXYVsPt[1]->Fill(rcDcaXY, rcGPt);
-			mHist->hDcaZVsPt[1]->Fill(rcDcaZ, rcGPt);
+			mHist->hDcaVsPt_Pos[1]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Pos[1]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Pos[1]->Fill(rcDcaZ, rcGPt);
 		    }
 		    if(gePid == 11 || gePid == 12) {
-			mHist->hDcaVsPt[2]->Fill(rcDca, rcGPt);
-			mHist->hDcaXYVsPt[2]->Fill(rcDcaXY, rcGPt);
-			mHist->hDcaZVsPt[2]->Fill(rcDcaZ, rcGPt);
+			mHist->hDcaVsPt_Pos[2]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Pos[2]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Pos[2]->Fill(rcDcaZ, rcGPt);
 		    }
 		    if(gePid == 14 || gePid == 15) {
-			mHist->hDcaVsPt[3]->Fill(rcDca, rcGPt);
-			mHist->hDcaXYVsPt[3]->Fill(rcDcaXY, rcGPt);
-			mHist->hDcaZVsPt[3]->Fill(rcDcaZ, rcGPt);
+			mHist->hDcaVsPt_Pos[3]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Pos[3]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Pos[3]->Fill(rcDcaZ, rcGPt);
+		    }
+		    
+		    if(gePid == 3) {
+			mHist->hDcaVsPt_Neg[0]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Neg[0]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Neg[0]->Fill(rcDcaZ, rcGPt);
+		    }
+		    if(gePid == 9) {
+			mHist->hDcaVsPt_Neg[1]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Neg[1]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Neg[1]->Fill(rcDcaZ, rcGPt);
+		    }
+		    if(gePid == 12) {
+			mHist->hDcaVsPt_Neg[2]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Neg[2]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Neg[2]->Fill(rcDcaZ, rcGPt);
+		    }
+		    if(gePid == 15) {
+			mHist->hDcaVsPt_Neg[3]->Fill(rcDca, rcGPt);
+			mHist->hDcaXYVsPt_Neg[3]->Fill(rcDcaXY, rcGPt);
+			mHist->hDcaZVsPt_Neg[3]->Fill(rcDcaZ, rcGPt);
 		    }
 		}
 	    }
@@ -629,11 +650,10 @@ void StMyAnalysisMaker::makePair() {
 			StThreeVectorF v0LMc = parMcTrk->Origin()-pVtxMc;
 			decayLMc = v0LMc.mag();
 		    }
-		    if(parentPidEP == 0 && parentPidEM == 0)
-		    	cout<<parentPidEP<<" "<<dcaPair<<" "<<decayLMc<<" "<<decayL<<" "<<rcPairM <<" "<<mcPair.M()<<endl;
+		    //if(parentPidEP == 0 && parentPidEM == 0)
+		    //	cout<<parentPidEP<<" "<<dcaPair<<" "<<decayLMc<<" "<<decayL<<" "<<rcPairM <<" "<<mcPair.M()<<endl;
 		}
 	    }
-
 
 	    mPairDst->mcPairM[nPairs]   = mcPair.M();
 	    mPairDst->decayL[nPairs]    = decayL;
@@ -703,13 +723,19 @@ int StMyAnalysisMaker::mcFilterAndGharge(int gePid) {
 }
 
 int StMyAnalysisMaker::getParent(StPicoMcTrack const * const mcTrk, bool doTraceUp) {
+    // search for parent. parent should be primary.
     if(mcTrk->parentId()==Pico::USHORTMAX || mcTrk->parentId()==mcTrk->mcId()) return -999;
 
     int parentId = mcTrk->parentId();
     //parentId = mPicoMcEvent->mcKey2PicoId().at(parentId);
     parentId -= 1;
     StPicoMcTrack *mcParentTrack = (StPicoMcTrack*) mPicoDst->mctrack(parentId);
+    //StThreeVectorF startVertex = mcParentTrack->Origin();
+    //StThreeVectorF pVtxMc = mPicoDst->mcevent()->pVertex();
+    //if((startVertex-pVtxMc).mag()>1e-8) return -999; // parent should be primary
+
     if(parentId != mcParentTrack->parentId() && doTraceUp) parentId = getParent(mcParentTrack, doTraceUp);
+
     return parentId;
 }
 

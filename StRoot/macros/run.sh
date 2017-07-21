@@ -1,5 +1,5 @@
 #!/bin/sh
-starver SL16d
+starver new
 current_data_time="`date \"+%m/%d %H:%M:%S\"`"
 echo $current_data_time
 job=$1
@@ -21,7 +21,7 @@ mkdir ./Files_$job/tpcRes
 at=`perl -e 'srand; print int(rand(99)+1)'`
 cp -p /star/institutions/lbl/mlomnitz/mlomnitz_prod/EffStudies/Sti_2015/pileup/pileupSet$at/pile**.root ./Files_$job/pile_up/pile_up$at.root
 
-nevt=6
+nevt=$2
 
 function doStarPythia {
 # ---- Producing Pythia6 charmed events
@@ -164,7 +164,7 @@ inMcEvt=Files_$job/hft_reco/hijing_charm_$run.McEvent.root
 if [ ! -e "$inPyFile" ]; then
 doStarPythia
 fi
-doStarsim $inPyFile 4
+doStarsim $inPyFile 1
 #doStarsimTest 3
 
 doTpcReco $inFzd
