@@ -72,9 +72,9 @@ void tuneCut(char *infile = "Pair_Ntuple.root") {
 	TCut cut;
 	cout<<"Pt cut : "<<lazy.Data()<<endl; 
 
-	TH2F *hDcaV0VsM  = new TH2F("hDcaV0VsM", "", 200, 0., 1., 300, 0., 3.);
+	TH2F *hDcaV0VsM  = new TH2F("hDcaV0VsM", "", 200, 0., 0.2., 300, 0., 3.);
 	TH2F *hDcaAVsM   = new TH2F("hDcaAVsM", "", 200, 0., 0.1, 300, 0., 3.);
-	TH2F *hDecayLVsM = new TH2F("hDecayLVsM", "", 400, -1., 1., 300, 0., 3.);
+	TH2F *hDecayLVsM = new TH2F("hDecayLVsM", "", 400, -0.2, 0.2, 300, 0., 3.);
 	TH1F *h = new TH1F("h","", 300,0,3);
 
 	t->Draw("M:dcaV0>>hDcaV0VsM", ptCut&&meson);
