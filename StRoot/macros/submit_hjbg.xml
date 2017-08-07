@@ -3,7 +3,7 @@
   <command>
     starver SL17a
 
-    ./run.sh ${JOBID} 6
+    ./run_hj_bg.sh ${JOBID} 20
 
   </command>
 
@@ -16,17 +16,13 @@
     <ListLocation>./jobs/list/</ListLocation>
   </Generator>
 
-  <output fromScratch="*.picoDst.root" toURL="file:&base;/../output/PicoDst/" />
+  <output fromScratch="./Files_Hijing_bg_$JOBID/hijing*" toURL="file:&base;/../output/Hijing_bg/" />
   <!--<output fromScratch="./Files_$JOBID/hft_reco/*.McEvent.root" toURL="file:&base;/../output/McEvent/" />-->
 
   <SandBox installer="ZIP">
-    <Package name="Local_lib_starsim_hijing_charm">
-      <File>file:./starsim.hijing.Charm.C</File>
-      <File>file:./makePicoDst.C</File>
-      <File>file:./run.sh</File>
-      <File>file:./StRoot/</File>
-      <File>file:./StarDb/</File>
-      <File>file:./.sl64_gcc482/</File>
+    <Package name="Local_lib_starsim_hijing_bg">
+      <File>file:./starsim.hijing.C</File>
+      <File>file:./run_hj_bg.sh</File>
     </Package>
   </SandBox>
 

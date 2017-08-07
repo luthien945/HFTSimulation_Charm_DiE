@@ -1,7 +1,7 @@
 #!/bin/bash
 date
 
-mystarver=new
+mystarver=SL17a
 starver $mystarver
 echo "working under STAR_LEVEL $STAR_LEVEL"
 
@@ -16,20 +16,18 @@ mkdir ./jobs/report
 mkdir ./jobs/csh
 mkdir ./jobs/list
 
-if [ -d ./Local_lib_starsim_hijing_charm.package ]; then
+if [ -d ./Local_lib_*.package ]; then
   rm -rf Local_lib*
 fi
 
 function doSetup {
-if [ -d ./.sl64_gcc482 ]; then
-  rm -rf .sl64_gcc482/
-fi
-
 rm -rf ./StRoot
 rm -rf starsim.hijing.Charm.C
+rm -rf starsim.hijing.C
 rm -rf run.sh
+rm -rf run_hj_bg.sh
+rm -rf *.xml
 rm -rf makePicoDst.C
-
 
 mkdir ./StRoot
 cp -r ../../src/StRoot/macros ./StRoot/
@@ -41,20 +39,34 @@ cp -r ../../src/StRoot/StIstSimMaker ./StRoot/
 cp -r ../../src/StRoot/StRefMultCorr ./StRoot/
 cp -r ../../src/StRoot/StPicoDstMaker ./StRoot/
 cp -r StRoot/macros/starsim.hijing.Charm.C ./
+cp -r StRoot/macros/starsim.hijing.C ./
 cp -r StRoot/macros/run.sh ./
+cp -r StRoot/macros/run_hj_bg.sh ./
+cp -r StRoot/macros/submit.xml ./
+cp -r StRoot/macros/submit_hjbg.xml ./
 cp -r StRoot/macros/makePicoDst.C ./
 
-cons
+if [ ! -d ./.sl64_gcc482 ]; then
+  cons
+fi
 }
 
 if [ "$1" = "setup" ]; then
+echo "doSetUp"
 doSetup
-else
-nrun=$1
+elif [ "$1" = "real" ]; then
+echo "real simu"
+nrun=$2
 path=$PWD
 echo $path
 star-submit-template -template submit.xml -entities nRuns=${nrun},base=${path}
-#Fix privileges for report, log, etc.
-#find ./ -user $USER -exec chgrp rhstar {} \;
-#find ./ -user $USER -exec chmod g+rw {} \;
+elif [ "$1" = "hj_bg" ]; then
+echo "run for hj background"
+nrun=$2
+path=$PWD
+echo $path
+star-submit-template -template submit_hjbg.xml -entities nRuns=${nrun},base=${path}
 fi
+
+
+
