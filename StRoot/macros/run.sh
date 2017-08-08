@@ -17,9 +17,12 @@ mkdir ./Files_$job/hft_reco
 mkdir ./Files_$job/pile_up
 mkdir ./Files_$job/picodst
 mkdir ./Files_$job/tpcRes
+mkdir ./Files_$job/Hijing_bg
+
 # --- Pile up file
 at=`perl -e 'srand; print int(rand(99)+1)'`
 cp -p /global/project/projectdirs/star/pwg/starlfs/yiguo/Simulation/Star_charm_DiE/PileUpFiles/pileup/pileupSet$at/pile**.root ./Files_$job/pile_up/pile_up$at.root
+cp -p /global/project/projectdirs/star/pwg/starlfs/yiguo/Simulation/Star_charm_DiE/scheduler/output/BackGroundFiles/Hijing_bg_1/hijing_bg_$run.starsim.root  ./Files_$job/Hijing_bg/hijing_bg_$run.starsim.root
 
 nevt=$2
 
@@ -49,12 +52,14 @@ mv hijing* ./Files_$job/Hijing/.
 
 function doStarsim {
 # ---- Producing sim file .fzd
-echo "A hijing......"
 inPyFile=$1
 inMode=$2
 
+echo "input EventGen File: $inPyFile"
+echo "Run StarSim Charm with Opt: $inMode"
+
 root4star <<EOF
-.L starsim.hijing.Charm.C
+.L ./starsim.hijing.Charm.C
 starsim($nevt,$run,$RANDOM,$inMode,"$inPyFile")
 .q
 EOF
@@ -155,21 +160,22 @@ mv *.picoDst.root hijing_charm_sim_production_v0_$run.picoDst.root
 }
 
 inPyFile=./Files_$job/Pythia6/pythia6_charm_$run.starsim.root
+inHjbgFile=./Files_$job/Hijing_bg/hijing_bg_$run.starsim.root
 inHjFile=./Files_$job/Hijing/hijing_charm_$run.starsim.root
 inFzd=Files_$job/fzd/hijing_charm_$run.starsim.fzd
 inEvent=Files_$job/tpc_reco/hijing_charm_$run.event.root
 inMuDst=Files_$job/hft_reco/hijing_charm_$run.MuDst.root
 inMcEvt=Files_$job/hft_reco/hijing_charm_$run.McEvent.root
 
-if [ ! -e "$inPyFile" ]; then
-doStarPythia
-fi
-doStarsim $inPyFile 1
-#doStarsimTest 3
+#if [ ! -e "$inPyFile" ]; then
+#doStarPythia
+#fi
 
-doTpcReco $inFzd
-doHftReco $inEvent
-doPicoDst $inMuDst $inMcEvt
+doStarsim $inHjbgFile 4
+
+#doTpcReco $inFzd
+#doHftReco $inEvent
+#doPicoDst $inMuDst $inMcEvt
 
 #mv vertex*.root ./Files_$job/.
 

@@ -54,6 +54,10 @@ fi
 if [ "$1" = "setup" ]; then
 echo "doSetUp"
 doSetup
+elif [ "$1" = "fullsetup" ]; then
+echo "do full setup"
+doSetup
+cons
 elif [ "$1" = "real" ]; then
 echo "real simu"
 nrun=$2

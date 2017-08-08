@@ -17,6 +17,7 @@ class StarDecayManager;
 class StarPythia8Decayer;
 class StarFilterMaker;
 class StarParticleFilter;
+class StarGenParticle;
 
 class StarPythia6;
 
@@ -46,12 +47,53 @@ TH1F *hVx;
 TH1F *hVy;
 TH1F *hVz;
 
+Int_t RunIndex;
+TTree *mCharmTree;
+
+Int_t P1_Gid;
+Float_t P1_Pt;
+Float_t P1_Eta;
+Float_t P1_Phi;
+
+Int_t P2_Gid;
+Float_t P2_Pt;
+Float_t P2_Eta;
+Float_t P2_Phi;
+
+bool decayOutSidePythia = kTRUE;
+bool doMesonDecay = kFALSE;
+bool doCharmTree = kTRUE;
+
 // charmed meson id
 const int nc = 4;
 const int charmPid[nc] = {411,421,431,4122}; // D+, D0,Ds,L_c
+const char *charmName[8] = {
+    "MyD+"    ,
+    "MyD-"    ,
+    "MyD0"    ,
+    "MyD0bar" ,
+    "MyDs+"   ,
+    "MyDs-"   ,
+    "MyLc+"   ,
+    "MyLc-"   
+}; 
 
 const int nh = 4;
 const int mesonPid[nh] = {111, 221, 223, 333}; // pi0, eta, omega, phi
+// ----------------------------------------------------------------------------
+void loadCharmTree() {
+    TFile *f = new TFile("./charmTree.root");
+    mCharmTree = (TTree *) f->Get("meTree"); 
+
+    mCharmTree->SetBranchAddress("ePosParentGID" , &P1_Gid ); 
+    mCharmTree->SetBranchAddress("ePosParentPt"  , &P1_Pt  ); 
+    mCharmTree->SetBranchAddress("ePosParentEta" , &P1_Eta ); 
+    mCharmTree->SetBranchAddress("ePosParentPhi" , &P1_Phi ); 
+    mCharmTree->SetBranchAddress("eNegParentGID" , &P2_Gid ); 
+    mCharmTree->SetBranchAddress("eNegParentPt"  , &P2_Pt  ); 
+    mCharmTree->SetBranchAddress("eNegParentEta" , &P2_Eta ); 
+    mCharmTree->SetBranchAddress("eNegParentPhi" , &P2_Phi ); 
+}
 
 // ----------------------------------------------------------------------------
 void geometry( TString tag, Bool_t agml=true )
@@ -100,16 +142,12 @@ void trig( Int_t n=0, Int_t mode)
     for ( Int_t i=1; i<n+1; i++ ) {
 	chain->Clear();
 	vertex(i, mode);
-	if(mode == 3) kinematics->Dist(10, "MyD0bar", ptDist_flat10, yDist);
-	if(mode == 3) kinematics->Dist(10, "MyD0" , ptDist_flat10, yDist);
-
 	if(mode == 4) {
+	    //kinematics->Dist(1, "MyD0bar", ptDist_flat10, yDist);
+	    //kinematics->Dist(1, "MyD0" , ptDist_flat10, yDist);
 	    kinematics->Dist(10, "e+", ptDist_expo, yDist);
 	    kinematics->Dist(10, "e-", ptDist_expo, yDist);
-	    //int nRef = (int) 200 * mRandom->Rndm();
-	    //cout<<"YiSaid : input "<<nRef<<" pi+/-"<<endl;
-	    //kinematics->Dist(nRef, "pi+", ptDist_flat10, yDist);
-	    //kinematics->Dist(nRef, "pi-", ptDist_flat10, yDist);
+	    if(doCharmTree) genKineCharmFromTree(i-1);
 	}
 	chain->Make();
 	_primary->event()->Print();
@@ -117,8 +155,84 @@ void trig( Int_t n=0, Int_t mode)
     }
 }
 // ----------------------------------------------------------------------------
+void genParticle(char *name, float pt, float eta, float phi) {
+    StarGenParticle *p = kinematics->AddParticle(name);
+
+    Double_t m  = p->GetMass();
+
+    // Use TVector3 to get the momentum vector correct
+    TVector3 momentum; {
+	momentum.SetPtEtaPhi( pt, eta, phi );
+    }
+
+    Double_t E2 = momentum.Mag2() + m*m;
+    Double_t E  = sqrt(E2);
+
+    p->SetPx( momentum.Px() );
+    p->SetPy( momentum.Py() );
+    p->SetPz( momentum.Pz() );
+    p->SetEnergy( E );
+
+    p->SetVx( 0. ); // put vertex at 0,0,0,0
+    p->SetVy( 0. );
+    p->SetVz( 0. );
+    p->SetTof( 0. );
+}
+// ----------------------------------------------------------------------------
+void genKineCharmFromTree(int i) {
+    mCharmTree->GetEntry(i);
+
+    int Gid, Index;
+    float pt, eta, phi;
+
+    Gid = P1_Gid;
+    pt  = P1_Pt;
+    eta = P1_Eta;
+    phi = P1_Phi;
+
+    Index = whichCharm(Gid);
+    if(Index<0 || Index>= nc*2) {
+	cout<<"YiSaid : not a Charm something wrong!!!"<<endl;
+	return;
+    }
+    cout<<"YiSaid : Input a "<<charmName[Index]<<" "<<P1_Gid<<" with mom = ["
+	<<P1_Pt<<","<<P1_Eta<<","<<P1_Phi<<"]"<<endl;
+    //kinematics->Kine(1, charmName[Index], pt, pt, eta, eta, phi, phi);
+    genParticle(charmName[Index], P1_Pt, P1_Eta, P1_Phi);
+    
+    Gid = P2_Gid;
+    pt  = P2_Pt;
+    eta = P2_Eta;
+    phi = P2_Phi;
+
+    Index = whichCharm(Gid);
+    if(Index<0 || Index>= nc*2) {
+	cout<<"YiSaid : not a Charm something wrong!!!"<<endl;
+	return;
+    }
+    //kinematics->Kine(1, charmName[Index], pt, pt, eta, eta, phi, phi);
+    cout<<"YiSaid : Input a "<<charmName[Index]<<" "<<P2_Gid<<" with mom = ["
+	<<P2_Pt<<","<<P2_Eta<<","<<P2_Phi<<"]"<<endl;
+    genParticle(charmName[Index], P2_Pt, P2_Eta, P2_Phi);
+}
+
+int whichCharm( int Gid) {
+    int id = -999;
+    for(int i=0; i<nc; i++) {
+	if(fabs(Gid) == charmPid[i]) {
+	    id = i;
+	    break;
+	}
+    }
+
+    if(id<0) return -1;
+    return Gid>0 ? id*2 : id*2+1;
+}
+// ----------------------------------------------------------------------------
 void myKine()
 { 
+    gSystem->Load( "libKinematics.so");
+    kinematics = new StarKinematics();  
     _primary -> AddGenerator(kinematics);
 }
 
@@ -348,12 +462,13 @@ void myParticle() {
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode = 0 , char* inPythia6File = "")
+void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode = 0 , char* inEventGenFile = "")
 { 
-    bool decayOutSidePythia = kTRUE;
-    bool doDalitz = kFALSE;
+    RunIndex = Index;
     mRandom = new TRandom3();
     mRandom->SetSeed(0);
+    cout<<"YiSaid : Opt = "<<mode<<endl;
+    cout<<"YiSaid : inEvtGenFile = "<<inEventGenFile<<endl;
 
     gROOT->ProcessLine(".L bfc.C");
     {
@@ -369,9 +484,6 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     gSystem->Load( "StarGeneratorBase.so" );
     gSystem->Load( "libMathMore.so"   );  
     gSystem->Load( "xgeometry.so"     );
-    gSystem->Load( "libKinematics.so");
-
-    kinematics = new StarKinematics();  
     //gMessMgr->SetLevel(999);
 
     // force gstar load/call
@@ -410,6 +522,9 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //_primary -> SetVertex( vx,vy,vz );
     //_primary -> SetSigma( vx_sig,vy_sig,vz_sig );
 
+    loadCharmTree(); 
+
+    TString infilename;
 
     switch(mode) {
 	// Setup pythia 
@@ -421,8 +536,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    // Setup an event generator
 	case 1 : 
 	    cout<<"YiSaid : Running at Hijing+StarGenEventReader mode"<<endl;
-	    TString infilename;
-	    infilename.Form(inPythia6File);
+	    infilename.Form(inEventGenFile);
 	    myEventReader(infilename);
 	    Hijing(decayOutSidePythia);
 	    break;
@@ -439,7 +553,8 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	case 4 :
 	    cout<<"YiSaid : Running at Pythia + Kine mode"<<endl;
 	    myKine();
-	    Hijing(decayOutSidePythia);
+	    infilename.Form(inEventGenFile);
+	    myEventReader(infilename);
 	    break; 
 	default :
 	    cout<<"YiSaid : You must choose a mode!"<<endl;
@@ -447,6 +562,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    cout<<"1 for Hijing+Pythia6 from a root file"<<endl;
 	    cout<<"2 for Hijing+Pythia8"<<endl;
 	    cout<<"3 for test"<<endl;
+	    cout<<"4 for Kine+hjbg read from EventReader"<<endl;
 	    break;
     }
 
@@ -464,11 +580,14 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	data.AddParticleToG3( "MyDs+"   , 0.1968E+01 , 0.50000E-12 , 1  , 3 , 431   , 12041 , 0 , 0 );
 	data.AddParticleToG3( "MyDs-"   , 0.1968E+01 , 0.50000E-12 , -1 , 3 , -431  , 12042 , 0 , 0 );
 	data.AddParticleToG3( "MyLc+"   , 0.2286E+01 , 0.20000E-12 , 1  , 3 , 4122  , 12043 , 0 , 0 );
+	data.AddParticleToG3( "MyLc-"   , 0.2286E+01 , 0.20000E-12 , -1 , 3 , -4122 , 12044 , 0 , 0 );
 
-	data.AddParticleToG3( "MyPi0" , 0.134 , 8.52000E-17 , 0  , 3 , 111 , 12137 , 0 , 0 );
-	data.AddParticleToG3( "MyEta" , 0.547 , 5.00000E-19 , 0  , 3 , 221 , 12138 , 0 , 0 );
-	data.AddParticleToG3( "MyOme" , 0.782 , 7.75000E-23 , 0. , 3 , 223 , 12139 , 0 , 0 );
-	data.AddParticleToG3( "MyPhi" , 1.020 , 1.54000E-22 , 0. , 3 , 333 , 12140 , 0 , 0 );
+	if(doMesonDecay) {
+	    data.AddParticleToG3( "MyPi0" , 0.134 , 8.52000E-17 , 0  , 3 , 111 , 12137 , 0 , 0 );
+	    data.AddParticleToG3( "MyEta" , 0.547 , 5.00000E-19 , 0  , 3 , 221 , 12138 , 0 , 0 );
+	    data.AddParticleToG3( "MyOme" , 0.782 , 7.75000E-23 , 0. , 3 , 223 , 12139 , 0 , 0 );
+	    data.AddParticleToG3( "MyPhi" , 1.020 , 1.54000E-22 , 0. , 3 , 333 , 12140 , 0 , 0 );
+	}
     }
     //
     // Initialize primary event generator and all sub makers
