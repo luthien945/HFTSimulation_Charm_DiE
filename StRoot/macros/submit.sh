@@ -22,6 +22,8 @@ fi
 
 function doSetup {
 rm -rf ./StRoot
+rm -rf ./RunHF
+rm -rf runHF.C
 rm -rf starsim.hijing.Charm.C
 rm -rf starsim.hijing.C
 rm -rf run.sh
@@ -45,6 +47,8 @@ cp -r StRoot/macros/run_hj_bg.sh ./
 cp -r StRoot/macros/submit.xml ./
 cp -r StRoot/macros/submit_hjbg.xml ./
 cp -r StRoot/macros/makePicoDst.C ./
+cp -r ../../src/Pythia/RunHF ./
+cp -r ../../src/Pythia/runHF.C ./ 
 
 if [ ! -d ./.sl64_gcc482 ]; then
   cons

@@ -26,6 +26,15 @@ cp -p /global/project/projectdirs/star/pwg/starlfs/yiguo/Simulation/Star_charm_D
 
 nevt=$2
 
+function doPythia {
+echo "Generating Pythia charm event tree"
+root4star <<EOF
+.x runHF.C($run, $nevt, 200)
+.q
+EOF
+mv pythiaevent*.root ./Files_$job/Pythia6/.
+}
+
 function doStarPythia {
 # ---- Producing Pythia6 charmed events
 echo "Generating pythia charm event"
@@ -54,13 +63,15 @@ function doStarsim {
 # ---- Producing sim file .fzd
 inPyFile=$1
 inMode=$2
+inCharm=$3
 
 echo "input EventGen File: $inPyFile"
+echo "input Charm Tree: $inCharm"
 echo "Run StarSim Charm with Opt: $inMode"
 
 root4star <<EOF
 .L ./starsim.hijing.Charm.C
-starsim($nevt,$run,$RANDOM,$inMode,"$inPyFile")
+starsim($nevt,$run,$RANDOM,$inMode,"$inPyFile","$inCharm")
 .q
 EOF
 mv hijing* ./Files_$job/fzd/.
@@ -95,9 +106,9 @@ EOF
 function doTpcReco {
 echo "Lomnitz: TPC reco starting"
 # ---- TPC reconstruction
-nEvents=10
+nEvents=$nevt
 start=0
-end=9
+end=$nevt
 inFile=$1
 
 chain=y2014a,event,tpc,fzin,geantout,tpcrs,TpcHitMover,TpxClu,evout,-HitFilt
@@ -160,6 +171,7 @@ mv *.picoDst.root hijing_charm_sim_production_v0_$run.picoDst.root
 }
 
 inPyFile=./Files_$job/Pythia6/pythia6_charm_$run.starsim.root
+inPyTree=./Files_$job/Pythia6/pythiaevent200_$run.root
 inHjbgFile=./Files_$job/Hijing_bg/hijing_bg_$run.starsim.root
 inHjFile=./Files_$job/Hijing/hijing_charm_$run.starsim.root
 inFzd=Files_$job/fzd/hijing_charm_$run.starsim.fzd
@@ -171,11 +183,15 @@ inMcEvt=Files_$job/hft_reco/hijing_charm_$run.McEvent.root
 #doStarPythia
 #fi
 
-doStarsim $inHjbgFile 4
+#if [ ! -e "$inPyTree" ]; then
+doPythia
+#fi
 
-#doTpcReco $inFzd
-#doHftReco $inEvent
-#doPicoDst $inMuDst $inMcEvt
+doStarsim $inHjbgFile 4 $inPyTree
+
+doTpcReco $inFzd
+doHftReco $inEvent
+doPicoDst $inMuDst $inMcEvt
 
 #mv vertex*.root ./Files_$job/.
 

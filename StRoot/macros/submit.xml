@@ -3,7 +3,7 @@
   <command>
     starver SL17a
 
-    ./run.sh ${JOBID} 6
+    ./run.sh ${JOBID} 20
 
   </command>
 
@@ -17,6 +17,7 @@
   </Generator>
 
   <output fromScratch="*.picoDst.root" toURL="file:&base;/../output/PicoDst/" />
+  <output fromScratch="./Files_$JOBID/Pythia6/*.root" toURL="file:&base;/../output/PicoDst/" />
   <!--<output fromScratch="./Files_$JOBID/hft_reco/*.McEvent.root" toURL="file:&base;/../output/McEvent/" />-->
 
   <SandBox installer="ZIP">
@@ -26,6 +27,8 @@
       <File>file:./run.sh</File>
       <File>file:./StRoot/</File>
       <File>file:./StarDb/</File>
+      <File>file:./RunHF/</File>
+      <File>file:./runHF.C</File>
       <File>file:./.sl64_gcc482/</File>
     </Package>
   </SandBox>

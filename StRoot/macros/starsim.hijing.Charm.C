@@ -63,6 +63,7 @@ Float_t P2_Phi;
 bool decayOutSidePythia = kTRUE;
 bool doMesonDecay = kFALSE;
 bool doCharmTree = kTRUE;
+bool doRandomCharm = kTRUE;
 
 // charmed meson id
 const int nc = 4;
@@ -81,8 +82,12 @@ const char *charmName[8] = {
 const int nh = 4;
 const int mesonPid[nh] = {111, 221, 223, 333}; // pi0, eta, omega, phi
 // ----------------------------------------------------------------------------
-void loadCharmTree() {
-    TFile *f = new TFile("./charmTree.root");
+int loadCharmTree(char *inputfile) {
+    TFile *f = new TFile(inputfile);
+    if(!f ||!(f->IsOpen())||!(f->GetNkeys())) {
+	cout<<"YiSaid : Error can't open charm tree!!"<<endl;
+	return 0;
+    }
     mCharmTree = (TTree *) f->Get("meTree"); 
 
     mCharmTree->SetBranchAddress("ePosParentGID" , &P1_Gid ); 
@@ -93,6 +98,7 @@ void loadCharmTree() {
     mCharmTree->SetBranchAddress("eNegParentPt"  , &P2_Pt  ); 
     mCharmTree->SetBranchAddress("eNegParentEta" , &P2_Eta ); 
     mCharmTree->SetBranchAddress("eNegParentPhi" , &P2_Phi ); 
+    return 1;
 }
 
 // ----------------------------------------------------------------------------
@@ -178,7 +184,7 @@ void genParticle(char *name, float pt, float eta, float phi) {
     p->SetVz( 0. );
     p->SetTof( 0. );
 }
-// ----------------------------------------------------------------------------
+
 void genKineCharmFromTree(int i) {
     mCharmTree->GetEntry(i);
 
@@ -190,20 +196,30 @@ void genKineCharmFromTree(int i) {
     eta = P1_Eta;
     phi = P1_Phi;
 
+    if(doRandomCharm) {
+	eta = (gRandom->Rndm()*2.-1.)*2.4;
+	phi = gRandom->Rndm()*TMath::Pi()*2.;
+    }
+
     Index = whichCharm(Gid);
     if(Index<0 || Index>= nc*2) {
 	cout<<"YiSaid : not a Charm something wrong!!!"<<endl;
 	return;
     }
-    cout<<"YiSaid : Input a "<<charmName[Index]<<" "<<P1_Gid<<" with mom = ["
-	<<P1_Pt<<","<<P1_Eta<<","<<P1_Phi<<"]"<<endl;
+    cout<<"YiSaid : Input a "<<charmName[Index]<<" "<<Gid<<" with mom = ["
+	<<pt<<","<<eta<<","<<phi<<"]"<<endl;
     //kinematics->Kine(1, charmName[Index], pt, pt, eta, eta, phi, phi);
-    genParticle(charmName[Index], P1_Pt, P1_Eta, P1_Phi);
+    genParticle(charmName[Index], pt, eta, phi);
     
     Gid = P2_Gid;
     pt  = P2_Pt;
     eta = P2_Eta;
     phi = P2_Phi;
+
+    if(doRandomCharm) {
+	eta = (gRandom->Rndm()*2.-1.)*2.4;
+	phi = gRandom->Rndm()*TMath::Pi()*2.;
+    }
 
     Index = whichCharm(Gid);
     if(Index<0 || Index>= nc*2) {
@@ -211,9 +227,9 @@ void genKineCharmFromTree(int i) {
 	return;
     }
     //kinematics->Kine(1, charmName[Index], pt, pt, eta, eta, phi, phi);
-    cout<<"YiSaid : Input a "<<charmName[Index]<<" "<<P2_Gid<<" with mom = ["
-	<<P2_Pt<<","<<P2_Eta<<","<<P2_Phi<<"]"<<endl;
-    genParticle(charmName[Index], P2_Pt, P2_Eta, P2_Phi);
+    cout<<"YiSaid : Input a "<<charmName[Index]<<" "<<Gid<<" with mom = ["
+	<<pt<<","<<eta<<","<<phi<<"]"<<endl;
+    genParticle(charmName[Index], pt, eta, phi);
 }
 
 int whichCharm( int Gid) {
@@ -462,13 +478,18 @@ void myParticle() {
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode = 0 , char* inEventGenFile = "")
+void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode = 0 , char* inEventGenFile = "", char* inCharmTree = "")
 { 
     RunIndex = Index;
     mRandom = new TRandom3();
     mRandom->SetSeed(0);
     cout<<"YiSaid : Opt = "<<mode<<endl;
     cout<<"YiSaid : inEvtGenFile = "<<inEventGenFile<<endl;
+    if(doCharmTree){
+	cout<<"YiSaid : inCharmTree = "<<inCharmTree<<endl;
+	if(!loadCharmTree(inCharmTree)) exit(0);
+    } 
+    if(doRandomCharm) cout<<"YiSaid : Random correlation between ccbar pairs!!"<<endl;
 
     gROOT->ProcessLine(".L bfc.C");
     {
@@ -522,7 +543,6 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
     //_primary -> SetVertex( vx,vy,vz );
     //_primary -> SetSigma( vx_sig,vy_sig,vz_sig );
 
-    loadCharmTree(); 
 
     TString infilename;
 
@@ -551,6 +571,7 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	    Hijing(decayOutSidePythia);
 	    break;
 	case 4 :
+	    // Kine+hjbg charm is readed from a separated Tree
 	    cout<<"YiSaid : Running at Pythia + Kine mode"<<endl;
 	    myKine();
 	    infilename.Form(inEventGenFile);

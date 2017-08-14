@@ -369,8 +369,8 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 
 	}//particles
 
-	if(ne<1) continue;
-	//if(ne != 2) continue;
+	//if(ne<1) continue;
+	if(ne != 2) continue;
 	hnEvents->Fill(5);
 
 	//      cout << "number of strings:  " << nstring << "  number of electrons:  " << ne << endl;
@@ -456,7 +456,7 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 
     char rootfilename[100];
     //sprintf(rootfilename,"output_%i/%s/pythiaevent%d%d.root",(int)energy,folder,irun/10,irun%10);
-    sprintf(rootfilename,"pythiaevent%d_%d.root",(int)energy,irun/10,irun%10);
+    sprintf(rootfilename,"./pythiaevent%d_%d.root",(int)energy,irun);
     TFile* file = new TFile(rootfilename,"RECREATE");
     //file->SetCompressionLevel(9);
     file->cd();
