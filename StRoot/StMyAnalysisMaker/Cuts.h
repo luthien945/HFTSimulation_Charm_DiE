@@ -33,7 +33,7 @@ namespace cuts
     UShort_t dau1Gid = 2;
     UShort_t dau2Gid = 3;
     UShort_t parentGidCut1 = 12037; // charm 
-    UShort_t parentGidCut2 = 12043;
+    UShort_t parentGidCut2 = 12044;
 
     UShort_t parentGidHCut1 = 12137; // meson
     UShort_t parentGidHCut2 = 12140;

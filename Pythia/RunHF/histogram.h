@@ -20,6 +20,7 @@ struct trkTree
   Float_t eePhi;
   Float_t eeRapidity;
   Float_t eeM;
+
   Int_t   ePosParentGID;
   Float_t ePosParentPt;
   Float_t ePosParentEta;
@@ -27,6 +28,10 @@ struct trkTree
   Float_t ePosPt;
   Float_t ePosEta;
   Float_t ePosPhi;
+  Float_t ePosVx;
+  Float_t ePosVy;
+  Float_t ePosVz;
+
   Int_t   eNegParentGID;
   Float_t eNegParentPt;
   Float_t eNegParentEta;
@@ -34,15 +39,8 @@ struct trkTree
   Float_t eNegPt;
   Float_t eNegEta;
   Float_t eNegPhi;
-
-
-  //Float_t ePaPosPt;
-  //Float_t ePaPosEta;
-  //Float_t ePaPosPhi;
-  //Float_t ePaPosY;
-  //Float_t ePaNegPt;
-  //Float_t ePaNegEta;
-  //Float_t ePaNegPhi;
-  //Float_t ePaNegY;
+  Float_t eNegVx;
+  Float_t eNegVy;
+  Float_t eNegVz;
 
 }; trkTree meTree;

@@ -24,46 +24,37 @@
 TFile *fout;
 TRandom3 *mRandom;
 const float PI = TMath::Pi();
+char *set[3] = {"charm", "kineE", "meson"};
 // Pair cuts
 //const float mPairYCut = 1.;
 
 TH2F *hMassVsParentMc;
 TH2F *hMassVsParentRc;
-//TH2F *hDecayLVsParent;
-//TH2F *hDcaPairVsParent;
-//TH2F *hDca1XYVsParent;
-//TH2F *hDca1ZVsParent;
-//TH2F *hDca1VsParent;
-//TH2F *hDca2XYVsParent;
-//TH2F *hDca2ZVsParent;
-//TH2F *hDca2VsParent;
-//
-//TH2F *hDca1VsParentPt1;
-//TH2F *hDca2VsParentPt1;
-//TH2F *hDca1VsParentPt2;
-//TH2F *hDca2VsParentPt2;
-//TH2F *hDca1VsParentPt3;
-//TH2F *hDca2VsParentPt3;
 
-TH2F *hDcaVsPt[10]   ;
-TH2F *hDcaXYVsPt[10] ;
-TH2F *hDcaZVsPt[10]  ;
-TH2F *hDcaPairVsMass[10];
-TH2F *hDecayLVsMass[10];
-TH2F *hDcaV0VsMass[10];
-TH2F *hOpenAngleVsMass[10];
+TH2F *hDcaXYVsPt[3];
+TH2F *hDcaZVsPt[3];
+TH2F *hDcaVsPt[3];
 
-//TH2F *hDcaVsPtMeson   ;
-//TH2F *hDcaXYVsPtMeson ;
-//TH2F *hDcaZVsPtMeson  ;
-//TH2F *hDcaPairVsMassMeson;
-//TH2F *hDecayLVsMassMeson;
-//TH2F *hDcaV0VsMassMeson;
-//TH2F *hOpenAngleVsMassMeson;
+TH2F *hDeltaPhiVsMass[3];
+TH2F *hDeltaEtaVsMass[3];
 
-TH1F *htmC = NULL;
-TH1F *htmM = NULL;
+TH2F *hDcaPVsMass0[3];
+TH2F *hDcaPVsMass1[3]; // normalized
 
-float dcaCuts[10] = {0.005,0.006,0.007,0.008,0.009,0.01,0.011,0.012,0.013,0.014};
-//float dcaPairCuts[10] = {0.005,0.01,0.015,0.02,0.025,0.03,0.035,0.04,0.045,0.05};
-float dcaPairCuts[10] = {0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01};
+void bookHistograms(){
+    hMassVsParentRc = new TH2F("hMassVsParentRc", "", 1000, 0, 5, 10, 0, 10);
+    hMassVsParentMc = new TH2F("hMassVsParentMc", "", 1000, 0, 5, 10, 0, 10);
+    for(int i=0;i<2;i++) {
+
+	hDeltaPhiVsMass[i] = new TH2F(Form("hDeltaPhiVsMass_%s", set[i]), "", 360, -0.5*PI, 1.5*PI, 500, 0, 5.);
+	hDeltaEtaVsMass[i] = new TH2F(Form("hDeltaEtaVsMass_%s", set[i]), "", 200, -2., 2., 500, 0, 5.);
+
+	hDcaXYVsPt[i] = new TH2F(Form("hDcaXYVsPt_%s", set[i]), "", 500, -0.05, 0.05, 200, 0, 6);
+	hDcaZVsPt[i]  = new TH2F(Form("hDcaZVsPt_%s", set[i]), "", 500, -0.05, 0.05, 200, 0, 6);
+	hDcaVsPt[i]   = new TH2F(Form("hDcaVsPt_%s", set[i]), "", 500, -0.05, 0.05, 200, 0, 6);
+
+	hDcaPVsMass0[i] = new TH2F(Form("hDcaPVsMass0_%s", set[i]), "", 500, 0, 0.05, 500, 0, 5);
+	hDcaPVsMass1[i] = new TH2F(Form("hDcaPVsMass1_%s", set[i]), "", 500, 0, 0.05, 500, 0, 5);
+    }
+}
+

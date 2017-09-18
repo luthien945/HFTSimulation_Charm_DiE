@@ -55,10 +55,24 @@ Float_t P1_Pt;
 Float_t P1_Eta;
 Float_t P1_Phi;
 
+Float_t e1_Pt;
+Float_t e1_Eta;
+Float_t e1_Phi;
+Float_t e1_Vx;
+Float_t e1_Vy;
+Float_t e1_Vz;
+
 Int_t P2_Gid;
 Float_t P2_Pt;
 Float_t P2_Eta;
 Float_t P2_Phi;
+
+Float_t e2_Pt;
+Float_t e2_Eta;
+Float_t e2_Phi;
+Float_t e2_Vx;
+Float_t e2_Vy;
+Float_t e2_Vz;
 
 bool decayOutSidePythia = kTRUE;
 bool doMesonDecay = kFALSE;
@@ -90,14 +104,27 @@ int loadCharmTree(char *inputfile) {
     }
     mCharmTree = (TTree *) f->Get("meTree"); 
 
-    mCharmTree->SetBranchAddress("ePosParentGID" , &P1_Gid ); 
-    mCharmTree->SetBranchAddress("ePosParentPt"  , &P1_Pt  ); 
-    mCharmTree->SetBranchAddress("ePosParentEta" , &P1_Eta ); 
-    mCharmTree->SetBranchAddress("ePosParentPhi" , &P1_Phi ); 
-    mCharmTree->SetBranchAddress("eNegParentGID" , &P2_Gid ); 
-    mCharmTree->SetBranchAddress("eNegParentPt"  , &P2_Pt  ); 
-    mCharmTree->SetBranchAddress("eNegParentEta" , &P2_Eta ); 
-    mCharmTree->SetBranchAddress("eNegParentPhi" , &P2_Phi ); 
+    mCharmTree->SetBranchAddress("ePosParentGID" , &P1_Gid );
+    mCharmTree->SetBranchAddress("ePosParentPt"  , &P1_Pt  );
+    mCharmTree->SetBranchAddress("ePosParentEta" , &P1_Eta );
+    mCharmTree->SetBranchAddress("ePosParentPhi" , &P1_Phi );
+    mCharmTree->SetBranchAddress("ePosPt"        , &e1_Pt  );
+    mCharmTree->SetBranchAddress("ePosEta"       , &e1_Eta );
+    mCharmTree->SetBranchAddress("ePosPhi"       , &e1_Phi );
+    mCharmTree->SetBranchAddress("ePosVx"        , &e1_Vx  );
+    mCharmTree->SetBranchAddress("ePosVy"        , &e1_Vy  );
+    mCharmTree->SetBranchAddress("ePosVz"        , &e1_Vz  );
+
+    mCharmTree->SetBranchAddress("eNegParentGID" , &P2_Gid );
+    mCharmTree->SetBranchAddress("eNegParentPt"  , &P2_Pt  );
+    mCharmTree->SetBranchAddress("eNegParentEta" , &P2_Eta );
+    mCharmTree->SetBranchAddress("eNegParentPhi" , &P2_Phi );
+    mCharmTree->SetBranchAddress("eNegPt"        , &e2_Pt  );
+    mCharmTree->SetBranchAddress("eNegEta"       , &e2_Eta );
+    mCharmTree->SetBranchAddress("eNegPhi"       , &e2_Phi );
+    mCharmTree->SetBranchAddress("eNegVx"        , &e2_Vx  );
+    mCharmTree->SetBranchAddress("eNegVy"        , &e2_Vy  );
+    mCharmTree->SetBranchAddress("eNegVz"        , &e2_Vz  );
     return 1;
 }
 
@@ -151,9 +178,10 @@ void trig( Int_t n=0, Int_t mode)
 	if(mode == 4) {
 	    //kinematics->Dist(1, "MyD0bar", ptDist_flat10, yDist);
 	    //kinematics->Dist(1, "MyD0" , ptDist_flat10, yDist);
+	    genKineEFromTree(i-1);
 	    kinematics->Dist(10, "e+", ptDist_expo, yDist);
 	    kinematics->Dist(10, "e-", ptDist_expo, yDist);
-	    if(doCharmTree) genKineCharmFromTree(i-1);
+	    //if(doCharmTree) genKineCharmFromTree(i-1);
 	}
 	chain->Make();
 	_primary->event()->Print();
@@ -161,6 +189,7 @@ void trig( Int_t n=0, Int_t mode)
     }
 }
 // ----------------------------------------------------------------------------
+// input charm from pythia tree
 void genParticle(char *name, float pt, float eta, float phi) {
     StarGenParticle *p = kinematics->AddParticle(name);
 
@@ -199,6 +228,7 @@ void genKineCharmFromTree(int i) {
     if(doRandomCharm) {
 	eta = (gRandom->Rndm()*2.-1.)*2.4;
 	phi = gRandom->Rndm()*TMath::Pi()*2.;
+	cout<<"YiSaid : random eta/phi = "<<eta<<"/"<<phi<<endl;
     }
 
     Index = whichCharm(Gid);
@@ -219,6 +249,7 @@ void genKineCharmFromTree(int i) {
     if(doRandomCharm) {
 	eta = (gRandom->Rndm()*2.-1.)*2.4;
 	phi = gRandom->Rndm()*TMath::Pi()*2.;
+	cout<<"YiSaid : random eta/phi = "<<eta<<"/"<<phi<<endl;
     }
 
     Index = whichCharm(Gid);
@@ -244,6 +275,61 @@ int whichCharm( int Gid) {
     if(id<0) return -1;
     return Gid>0 ? id*2 : id*2+1;
 }
+
+// ----------------------------------------------------------------------------
+// input e+e- from  Pythia tree
+void genKineEFromTree(int i) {
+    mCharmTree->GetEntry(i);
+    float pt, eta, phi;
+    float vx, vy, vz;
+
+    pt = e1_Pt;
+    eta = e1_Eta;
+    phi = e1_Phi;
+    vx = e1_Vx;
+    vy = e1_Vy;
+    vz = e1_Vz;
+
+    cout<<"YiSaid : Input a e+ with mom = ["<<pt<<","<<eta<<","<<phi<<"]"
+	<<"and vertex at : ["<<vx<<","<<vy<<","<<vz<<"]"<<endl;
+    genParticleWithVertex("e+", pt, eta, phi, vx, vy, vz);
+
+    pt = e2_Pt;
+    eta = e2_Eta;
+    phi = e2_Phi;
+    vx = e2_Vx;
+    vy = e2_Vy;
+    vz = e2_Vz;
+
+    cout<<"YiSaid : Input a e- with mom = ["<<pt<<","<<eta<<","<<phi<<"]"
+	<<"and vertex at : ["<<vx<<","<<vy<<","<<vz<<"]"<<endl;
+    genParticleWithVertex("e-", pt, eta, phi, vx, vy, vz);
+}
+
+void genParticleWithVertex(char *name, float pt, float eta, float phi, float vx, float vy, float vz) {
+    StarGenParticle *p = kinematics->AddParticle(name);
+
+    Double_t m  = p->GetMass();
+
+    // Use TVector3 to get the momentum vector correct
+    TVector3 momentum; {
+	momentum.SetPtEtaPhi( pt, eta, phi );
+    }
+
+    Double_t E2 = momentum.Mag2() + m*m;
+    Double_t E  = sqrt(E2);
+
+    p->SetPx( momentum.Px() );
+    p->SetPy( momentum.Py() );
+    p->SetPz( momentum.Pz() );
+    p->SetEnergy( E );
+
+    p->SetVx( vx ); // put vertex at 0,0,0,0
+    p->SetVy( vy );
+    p->SetVz( vz );
+    p->SetTof( 0. );
+}
+
 // ----------------------------------------------------------------------------
 void myKine()
 { 
@@ -489,7 +575,9 @@ void starsim( Int_t nevents=1, Int_t Index = 0, Int_t rngSeed=4321 , Int_t mode 
 	cout<<"YiSaid : inCharmTree = "<<inCharmTree<<endl;
 	if(!loadCharmTree(inCharmTree)) exit(0);
     } 
-    if(doRandomCharm) cout<<"YiSaid : Random correlation between ccbar pairs!!"<<endl;
+    if(decayOutSidePythia) cout<<"YiSaid : call pythia8 decayer!!"<<endl;
+    if(doMesonDecay) cout<<"YiSaid : do Meson decay!!"<<endl;
+    //if(doRandomCharm) cout<<"YiSaid : Random correlation between ccbar pairs!!"<<endl;
 
     gROOT->ProcessLine(".L bfc.C");
     {

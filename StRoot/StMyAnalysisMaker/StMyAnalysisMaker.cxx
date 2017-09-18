@@ -19,6 +19,8 @@
 #include "Cuts.h"
 #include "TMath.h"
 
+#include <vector>
+
 ClassImp(StMyAnalysisMaker)
 
 StMyAnalysisMaker::StMyAnalysisMaker(char const *name, StPicoDstMaker *picoMaker, char const* filename)
@@ -86,6 +88,8 @@ Int_t StMyAnalysisMaker::Make() {
     if(nCharmElectrons>=1) mHist->hEvtCounter->Fill(6);
     if(nCharmElectrons>=2) mHist->hEvtCounter->Fill(7);
     if(nCharmElectrons>=3) mHist->hEvtCounter->Fill(8);
+
+    mHist->hMc_Charm_NeVsNc->Fill(nCharmElectrons, nCharmMesons);
     makePair();
     //loopMcVertex();
 
@@ -98,9 +102,11 @@ Int_t StMyAnalysisMaker::Make() {
 }
 
 Int_t StMyAnalysisMaker::Finish() {
-    //mHist->writeHist();
+    mHist->writeHist();
+    mOutFile->cd();
+    mTree->Write();
     if(mOutFile) {
-	mOutFile->Write();
+	//mOutFile->Write();
 	mOutFile->Close();
     }
     if(mHist) delete mHist;
@@ -208,10 +214,15 @@ bool StMyAnalysisMaker::isGoodEvent()
 }
 
 int StMyAnalysisMaker::loopMcTrack() {
+    float PI = TMath::Pi();
     nMcTracks = mPicoDst->numberOfMcTracks();
 
-    cout<<"Number of mctracks : "<<nMcTracks<<endl;
-    cout<<"Number of rctracks : "<<mPicoDst->numberOfTracks()<<endl;
+    LOG_DEBUG <<"Number of mctracks : "<<nMcTracks<<endl;
+    LOG_DEBUG <<"Number of rctracks : "<<mPicoDst->numberOfTracks()<<endl;
+
+    std::vector<int> indexMcCharm;
+    std::vector<int> mcCharmPid;
+    std::vector<int> orgId;
     for(int itMc=0; itMc<nMcTracks; itMc++) {
 	StPicoMcTrack *mcTrk = (StPicoMcTrack*) mPicoDst->mctrack(itMc);
 	StThreeVectorF startVertex = mcTrk->Origin();
@@ -220,8 +231,8 @@ int StMyAnalysisMaker::loopMcTrack() {
 	if((startVertex-pVtxMc).mag()<1e-8) isPrimary = kTRUE;
 	//cout<<itMc<<" "<<mcTrk->mcId()<<endl;
 	int gePid = mcTrk->GePid();
-	int parentId = getParent(mcTrk, kFALSE);
-	int ancestorId = getParent(mcTrk, kTRUE);
+	int parentId = getParent(mcTrk, kFALSE)-1; // Pico index = mcId-1
+	int ancestorId = getParent(mcTrk, kTRUE)-1;
 
 	int parentGeId = -999;
 	int ancestorGeId = -999;
@@ -237,6 +248,15 @@ int StMyAnalysisMaker::loopMcTrack() {
 		if(gePid == 2 || gePid == 3) {
 		    mHist->hDecayLMcVsP_charm->Fill(diff.mag(), momPar.mag());
 		    mHist->hParDisCharm->Fill(parDis, parentGeId-cuts::parentGidCut1);
+		    mHist->hMc_Charm_PtVsPid->Fill(momPar.perp(), parentGeId);
+		    mHist->hMc_Charm_PhiVsPid->Fill(momPar.phi(), parentGeId);
+		    mHist->hMc_Charm_EtaVsPid->Fill(momPar.pseudoRapidity(), parentGeId);
+		    if(parentId == ancestorId) {
+			indexMcCharm.push_back(parentId);
+			mcCharmPid.push_back(parentGeId);
+			orgId.push_back(ancestorId);
+		    }
+
 		}
 	    }
 	    if(parentGeId>=cuts::parentGidHCut1 && parentGeId<=cuts::parentGidHCut2) {
@@ -261,8 +281,8 @@ int StMyAnalysisMaker::loopMcTrack() {
 
 	if(gePid>=cuts::parentGidCut1 && gePid<=cuts::parentGidCut2) {
 	    mHist->hPid_CharmPid->Fill(gePid);
-	    cout<<"Charmed : "<<gePid<<endl;
-	    nCharmMesons++;
+	    LOG_DEBUG <<"Charmed : "<<gePid<<endl;
+	    //nCharmMesons++;
 	}
 
 	if(parentGeId)mHist->hPid_GenIdVsParentGenId->Fill(gePid, parentGeId);
@@ -270,7 +290,7 @@ int StMyAnalysisMaker::loopMcTrack() {
 
 	if(parentGeId>=12037 && parentGeId<=12044) {
 	    mHist->hPid_GenIdVsCharmPid->Fill(gePid, parentGeId);
-	    //cout<<"A charm decays : "<<parentGeId<<"->"<<gePid<<endl;
+	    LOG_DEBUG <<"A charm decays : "<<parentGeId<<"->"<<gePid<<endl;
 	}
 
 	// only pi, k, p and e 
@@ -410,7 +430,7 @@ int StMyAnalysisMaker::loopMcTrack() {
 		    if(rcPxl1 && rcPxl2 && rcIst) mHist->hRc_charm_PtVsHFTMatch->Fill(rcGPt, 3);
 		}
 
-		if(gePid == 2 || gePid == 3 && isHFTM) {
+		if((gePid == 2 || gePid == 3) && isHFTM) {
 		    if(parentGeId>=cuts::parentGidCut1 && parentGeId<=cuts::parentGidCut2) {
 			mHist->hRc_charm_DcaXYVsPt->Fill(rcDcaXY, rcGPt);
 			mHist->hRc_charm_DcaZVsPt->Fill(rcDcaZ, rcGPt);
@@ -490,6 +510,34 @@ int StMyAnalysisMaker::loopMcTrack() {
 	    }
 	}
 
+    }
+
+    std::sort(indexMcCharm.begin(), indexMcCharm.end());
+    indexMcCharm.erase(std::unique(indexMcCharm.begin(), indexMcCharm.end()), indexMcCharm.end());
+
+    nCharmMesons = indexMcCharm.size();
+
+    if(indexMcCharm.size() != 2) {
+	return kStOK; 
+    }
+
+    if(indexMcCharm[0] == indexMcCharm[1]) {
+	return kStOK;
+    }
+
+    StPicoMcTrack *mC0 = (StPicoMcTrack*) mPicoDst->mctrack(indexMcCharm[0]);
+    StPicoMcTrack *mC1 = (StPicoMcTrack*) mPicoDst->mctrack(indexMcCharm[1]);
+    if(mC0 && mC1) {
+	int Pid0 = mC0->GePid();
+	int Pid1 = mC1->GePid();
+	StThreeVectorF mom0 = mC0->Mom();
+	StThreeVectorF mom1 = mC1->Mom();
+	float dPhi = mom0.phi()-mom1.phi();
+	float dEta = mom0.pseudoRapidity()-mom1.pseudoRapidity();
+	if(dPhi<-0.5*PI) dPhi+=2*PI;
+	if(dPhi>1.5*PI) dPhi-=2*PI;
+
+	mHist->hMc_Charm_Corr->Fill(dPhi, dEta);
     }
 }
 
@@ -724,17 +772,20 @@ int StMyAnalysisMaker::mcFilterAndGharge(int gePid) {
 
 int StMyAnalysisMaker::getParent(StPicoMcTrack const * const mcTrk, bool doTraceUp) {
     // search for parent. parent should be primary.
-    if(mcTrk->parentId()==Pico::USHORTMAX || mcTrk->parentId()==mcTrk->mcId()) return -999;
+    if(mcTrk->parentId()==Pico::USHORTMAX || mcTrk->parentId()==mcTrk->mcId()) {
+	if(!doTraceUp) return -999;
+	return mcTrk->mcId();
+    }
 
     int parentId = mcTrk->parentId();
     //parentId = mPicoMcEvent->mcKey2PicoId().at(parentId);
-    parentId -= 1;
-    StPicoMcTrack *mcParentTrack = (StPicoMcTrack*) mPicoDst->mctrack(parentId);
+    //parentId -= 1;
+    StPicoMcTrack *mcParentTrack = (StPicoMcTrack*) mPicoDst->mctrack(parentId-1);
     //StThreeVectorF startVertex = mcParentTrack->Origin();
     //StThreeVectorF pVtxMc = mPicoDst->mcevent()->pVertex();
     //if((startVertex-pVtxMc).mag()>1e-8) return -999; // parent should be primary
 
-    if(parentId != mcParentTrack->parentId() && doTraceUp) parentId = getParent(mcParentTrack, doTraceUp);
+    if(mcParentTrack->mcId() != mcParentTrack->parentId() && doTraceUp) parentId = getParent(mcParentTrack, doTraceUp);
 
     return parentId;
 }

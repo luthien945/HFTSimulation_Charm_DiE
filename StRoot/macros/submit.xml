@@ -18,6 +18,7 @@
 
   <output fromScratch="*.picoDst.root" toURL="file:&base;/../output/PicoDst/" />
   <output fromScratch="./Files_$JOBID/Pythia6/*.root" toURL="file:&base;/../output/PicoDst/" />
+  <output fromScratch="./Files_$JOBID/hft_reco/*.McEvent.root" toURL="file:&base;/../output/PicoDst/" />
   <!--<output fromScratch="./Files_$JOBID/hft_reco/*.McEvent.root" toURL="file:&base;/../output/McEvent/" />-->
 
   <SandBox installer="ZIP">

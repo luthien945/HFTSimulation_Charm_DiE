@@ -93,6 +93,7 @@
 ./runhfevent_C.so: /common/star/star64/ROOT/5.34.30_3/.sl64_gcc482/rootdeb/include/TPrimary.h
 ./runhfevent_C.so: /common/star/star64/ROOT/5.34.30_3/.sl64_gcc482/rootdeb/include/TAtt3D.h
 ./runhfevent_C.so: /common/star/star64/ROOT/5.34.30_3/.sl64_gcc482/rootdeb/include/X3DBuffer.h
+./runhfevent_C.so: /common/star/star64/ROOT/5.34.30_3/.sl64_gcc482/rootdeb/include/TRandom3.h
 ./runhfevent_C.so: histogram.h
 ./runhfevent_C.so: /common/star/star64/ROOT/5.34.30_3/.sl64_gcc482/rootdeb/include/cintdictversion.h /common/star/star64/ROOT/5.34.30_3/.sl64_gcc482/rootdeb/include/RVersion.h
 runhfevent_C__ROOTBUILDVERSION= 5.34/30

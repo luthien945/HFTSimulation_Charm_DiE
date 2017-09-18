@@ -68,8 +68,8 @@ void readPicoDst(const TString inFile="test.list", const TString outFileName="te
     
     for (int iEvent = 0; iEvent < nEntries; ++iEvent)
     {
-	if(iEvent%1==0) cout << "Working on eventNumber " << iEvent << endl;
-	else cout << "Working on eventNumber " << iEvent << endl;
+	if(iEvent%100==0) cout << "Working on eventNumber " << iEvent << endl;
+	//else cout << "Working on eventNumber " << iEvent << endl;
 	mChain->Clear();
 	int iret = mChain->Make();
 	if (iret)

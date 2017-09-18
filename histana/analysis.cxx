@@ -56,6 +56,7 @@ bool isHftM(int hitmap);
 void bookHistograms();
 void initCutHist(TString name);
 int  getParentIndex(int index);
+int  getIndex(int Pid);
 
 int main(int argc, char** argv){
     if(argc!=1 && argc!=3 && argc!=2) {
@@ -66,19 +67,19 @@ int main(int argc, char** argv){
     char outFile[100];
     sprintf(outFile,"charm_simu.root");
 
-    if(argc>=3){
+    if(argc>=2){
 	inFile = argv[1];
-	sprintf(outFile, "%s", argv[2]);
+	//sprintf(outFile, "%s", argv[2]);
     }
 
-    bool doTrueM = true;
-    if(argc == 4) {
-	doTrueM = atoi(argv[3]);
-    } else if(argc == 2) {
-	doTrueM = atoi(argv[1]);
-    }
+    bool doTrueM = false;
+    //if(argc == 4) {
+    //    doTrueM = atoi(argv[3]);
+    //} else if(argc == 2) {
+    //    doTrueM = atoi(argv[1]);
+    //}
 
-    if(doTrueM) sprintf(outFile, "charm_simu_TrueM.root");
+    //if(doTrueM) sprintf(outFile, "charm_simu_TrueM.root");
 
     TString lazy;
 
@@ -89,12 +90,6 @@ int main(int argc, char** argv){
     //--------------------------------------------------
     init();
     bookHistograms();
-    //fout->mkdir("dcaTune");
-    //fout->mkdir("dcaPairTune");
-    //initCutHist("dcaTune");
-    //initCutHist("dcaPairTune");
-    //initCutHist("decayLTune");
-    //initCutHist("dcaV0Tune");
 
     TFile * fNtp = new TFile("Pair_Ntuple.root", "recreate");
     TNtuple *pairT = new TNtuple("pairT", "pairT",
@@ -141,6 +136,7 @@ int main(int argc, char** argv){
     int n = chain->GetEntries();
     cout<<n<<" events"<<endl;
     int counter = 0;
+    int charmC = 0;
 
     for(int i=0;i<n;i++){
 	if(i%10000==0) cout<<"begin "<<i<<"th entry...."<<endl;
@@ -187,6 +183,13 @@ int main(int argc, char** argv){
 	    float eta1 = dau1.Eta();
 	    float eta2 = dau2.Eta();
 
+	    float dcaP = TMath::Sqrt(dca1*dca1+dca2*dca2)*0.5;
+	    float dphi = dau1.Phi()-dau2.Phi();
+	    if(dphi<-0.5*PI) dphi+=2.*PI;
+	    if(dphi>1.5*PI) dphi-=2.*PI;
+
+	    float deta = eta1-eta2;
+
 	    arr[0]  = pairM;
 	    arr[1]  = dcaV0;
 	    arr[2]  = dcaPair;
@@ -212,7 +215,7 @@ int main(int argc, char** argv){
 #endif
 	    if(parentPid1>12100) {
 		hMassVsParentMc -> Fill(mcPairM , indexP1-3);
-	    } else if(parentPid1>=12037 && parentPid1<=12043) {
+	    } else if(parentPid1>=12037 && parentPid1<=12044) {
 		hMassVsParentMc -> Fill(mcPairM , 1);
 	    } else if(parentPid1 == 0 && parentPid2 ==0) {
 		hMassVsParentMc -> Fill(mcPairM, 0);
@@ -233,95 +236,42 @@ int main(int argc, char** argv){
 
 	    pairT->Fill(arr);
 
-	    if(!doTrueM || (trueM1 && trueM2))
-	    {
-		hDcaVsPt[indexP1]->Fill(dca1, pt1);
-		hDcaXYVsPt[indexP1]->Fill(dca1XY, pt1);
-		hDcaZVsPt[indexP1]->Fill(dca1Z, pt1);
+	    int index1 = getIndex(parentPid1);
+	    int index2 = getIndex(parentPid2);
 
-		hDcaVsPt[indexP2]->Fill(dca2, pt2);
-		hDcaXYVsPt[indexP2]->Fill(dca2XY, pt2);
-		hDcaZVsPt[indexP2]->Fill(dca2Z, pt2);
+	    if(index1<0 || index2<0) continue;
+	    //if(index1 != index2 || index1<0 || index2<0) continue;
 
-		if(pt1>0.5 && pt2>0.5) {
-		    if(parentPid1>12100) {
-			hDcaPairVsMass[indexP1-3]->Fill(dcaPair, pairM);
-			hDecayLVsMass[indexP1-3]->Fill(decayL, pairM);
-			hDcaV0VsMass[indexP1-3]->Fill(dcaV0, pairM);
-			hOpenAngleVsMass[indexP1-3]->Fill(openAngle, pairM);
-		    } else if(parentPid1>=12037 && parentPid1<=12043) {
-			hDcaPairVsMass[1]->Fill(dcaPair, pairM);
-			hDecayLVsMass[1]->Fill(decayL, pairM);
-			hDcaV0VsMass[1]->Fill(dcaV0, pairM);
-			hOpenAngleVsMass[1]->Fill(openAngle, pairM);
-		    } else if(parentPid1 == 0 && parentPid2 == 0){
-			hDcaPairVsMass[0]->Fill(dcaPair, pairM);
-			hDecayLVsMass[0]->Fill(decayL, pairM);
-			hDcaV0VsMass[0]->Fill(dcaV0, pairM);
-			hOpenAngleVsMass[0]->Fill(openAngle, pairM);
-		    }
+	    hDcaXYVsPt[index1]->Fill(dca1XY, pt1);
+	    hDcaZVsPt[index1]->Fill(dca1Z, pt1);
+	    hDcaVsPt[index1]->Fill(dca1, pt1);
+
+	    hDcaXYVsPt[index2]->Fill(dca2XY, pt2);
+	    hDcaZVsPt[index2]->Fill(dca2Z, pt2);
+	    hDcaVsPt[index2]->Fill(dca2, pt2);
+
+	    //if(index1 != index2) continue;
+	    if(pt1>0.5 && pt2>0.5) {
+		hDcaPVsMass0[index1]->Fill(dcaP, pairM);
+		hDcaPVsMass1[index1]->Fill(dcaP, pairM);
+
+		hDeltaPhiVsMass[index1]->Fill(dphi, pairM);
+		hDeltaEtaVsMass[index1]->Fill(deta, pairM);
+
+		if(parentPid1>12100) {
+		    hMassVsParentRc -> Fill(pairM , indexP1-3);
+		} else if(parentPid1>=12037 && parentPid1<=12044) {
+		    hMassVsParentRc -> Fill(pairM , 1);
+		} else if(parentPid1 == 0 && parentPid2 ==0) {
+		    hMassVsParentRc -> Fill(pairM, 0);
+		} else {
+		    cout<<"Error : Wrong pair? parentPid1 "<<parentPid1<<" parentPid2 "<<parentPid2<<endl;
 		}
 	    }
-
-#if 0
-	    if(pt1<0.5 && pt2<0.5) continue;
-	    fout->cd("dcaTune");
-	    htmC = NULL;
-	    htmM = NULL;
-	    for(int i=0;i<10;i++) {
-		lazy.Form("dcaTune/hMassC_%i", i);
-		fout->GetObject(lazy.Data(), htmC);
-		if(!htmC) {
-		    lazy.Form("hMassC_%i", i);
-		    htmC = new TH1F(lazy.Data(), "", 400, 0, 4);
-		}
-
-		lazy.Form("dcaTune/hMassM_%i",i);
-		fout->GetObject(lazy.Data(), htmM);
-		if(!htmM) {
-		    lazy.Form("hMassM_%i", i);
-		    htmM = new TH1F(lazy.Data(), "", 400, 0, 4);
-		}
-
-		if(dca1<dcaCuts[i] && dca2<dcaCuts[i]) {
-		    if(parentPid1<12100) htmC->Fill(pairM);
-		    if(parentPid1>12100) htmM->Fill(pairM);
-		}
-	    }
-
-	    fout->cd("dcaPairTune");
-	    htmC = NULL;
-	    htmM = NULL;
-	    for(int i=0;i<10;i++) {
-		//lazy.Form("dcaPairTune/hMassC_%i",i);
-		//TH1F *htmC; fout->GetObject(lazy.Data(), htmC);
-		//lazy.Form("dcaPairTune/hMassM_%i",i);
-		//TH1F *htmM; fout->GetObject(lazy.Data(), htmM);
-
-		lazy.Form("dcaPairTune/hMassC_%i", i);
-		fout->GetObject(lazy.Data(), htmC);
-		if(!htmC) {
-		    lazy.Form("hMassC_%i", i);
-		    htmC = new TH1F(lazy.Data(), "", 400, 0, 4);
-		}
-		lazy.Form("dcaPairTune/hMassM_%i",i);
-		fout->GetObject(lazy.Data(), htmM);
-		if(!htmM) {
-		    lazy.Form("hMassM_%i", i);
-		    htmM = new TH1F(lazy.Data(), "", 400, 0, 4);
-		}
-
-		if(dca1>0.015 && dca2>0.015) continue;
-
-		if(dcaPair<dcaPairCuts[i]) {
-		    if(parentPid1<12100) htmC->Fill(pairM);
-		    if(parentPid1>12100) htmM->Fill(pairM);
-		}
-	    }
-#endif
 	}
     }
     cout<<"number of pairs : "<<counter<<endl;
+    cout<<"number of charm pairs: " << charmC<<endl;
 
     //writeHistograms(outFile);
     //deleteHistograms();
@@ -341,59 +291,6 @@ int main(int argc, char** argv){
 void init(){
 }
 
-void bookHistograms(){
-    fout->mkdir("single");
-    fout->cd("single");
-
-    TString s;
-    TString n;
-
-    char* spec[9] = {"Kine_e", "D+", "D0", "Ds", "Lamba_c", "pi0", "eta", "omega", "phi"};
-
-    for(int i = 0; i<9; i++) {
-	s.Form("hDcaVsPt_%i", i);  n.Form("hDcaVsPt_%s", spec[i]);
-	hDcaVsPt[i]   = new TH2F(s.Data() , n.Data() , 250 , 0     , 0.25 , 200 , 0 , 4);
-	s.Form("hDcaXYVsPt_%i", i);  n.Form("hDcaXYVsPt_%s", spec[i]);
-	hDcaXYVsPt[i] = new TH2F(s.Data() , n.Data() , 500 , -0.25 , 0.25 , 200 , 0 , 4);
-	s.Form("hDcaZVsPt_%i", i);  n.Form("hDcaZVsPt_%s", spec[i]);
-	hDcaZVsPt[i]  = new TH2F(s.Data() , n.Data() , 500 , -0.25 , 0.25 , 200 , 0 , 4);
-    }
-    fout->mkdir("pair");
-    fout->cd("pair");
-    hMassVsParentMc  = new TH2F("hMassVsParentMc"  , "" , 400 , 0     , 4    , 10 , 0 , 10);
-
-    char* name[6] = {"Kine_e", "charm", "pi0", "eta", "omega", "phi"};
-    for(int i=0; i<6; i++) {
-	s.Form("hDcaPairVsMass_%i", i);  n.Form("hDcaPairVsMass_%s", name[i]);
-	hDcaPairVsMass[i]   = new TH2F(s.Data() , n.Data() , 250 , 0   , 0.05        , 400 , 0 , 4);
-	s.Form("hDecayLVsMass_%i", i);  n.Form("hDecayLVsMass_%s", name[i]);
-	hDecayLVsMass[i]    = new TH2F(s.Data() , n.Data() , 500 , -10 , 10          , 400 , 0 , 4);
-	s.Form("hDcaV0VsMass_%i", i);  n.Form("hDcaV0VsMass_%s", name[i]);
-	hDcaV0VsMass[i]     = new TH2F(s.Data() , n.Data() , 250 , 0   , 0.25        , 400 , 0 , 4);
-	s.Form("hOpenAngleVsMass_%i", i);  n.Form("hOpenAngleVsMass_%s", name[i]);
-	hOpenAngleVsMass[i] = new TH2F(s.Data() , n.Data() , 180 , 0   , TMath::Pi() , 400 , 0 , 4);
-    }
-}
-
-void initCutHist(TString name) {
-    fout->mkdir(name.Data());
-    fout->cd(name.Data());
-    TH1F *hMassC[10];
-    TH1F *hMassM[10];
-
-    TString fname;
-    for(int i=0; i<10; i++) {
-	fname.Form("hMassC_%i", i);
-	hMassC[i] = new TH1F(fname.Data(), "", 200, 0, 2);
-	fname.Form("hMassM_%i", i);
-	hMassM[i] = new TH1F(fname.Data(), "", 200, 0, 2);
-    }
-
-    //TGraphErrors *gRatioCharm = new TGraphErrors(10);
-    //gRatioCharm->SetName("gRatioCharm");
-    //TGraphErrors *gRatioMeson = new TGraphErrors(10);
-    //gRatioMeson->SetName("gRatioMeson");
-}
 
 
 bool isHftM(int hitsMap) {
@@ -415,9 +312,12 @@ int getParentIndex(int pid) {
     else return -999;
 }
 
-
-
-
+int getIndex(int pid) {
+    if(pid == 0) return 1;
+    else if(pid >= 12037 && pid <12100)  return 0;
+    else if(pid > 12100) return 2;
+    else return -999;
+}
 
 
 

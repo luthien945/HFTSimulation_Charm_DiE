@@ -10,12 +10,13 @@ my $STAR_LEVEL = "new";
 my $File = "*.root";
 my $NEvents = 1000000;
 my $Dir = Cwd::cwd();
-my $submit = "/scheduler/submit"; 
-$Dir =~ s/$submit//;
+my $submitDir = "/scheduler/submit"; 
+$Dir =~ s/$submitDir//;
 print "my Dir: $Dir\n";
 
 my %ARG = (files => '*.root',
 	FilesPerJob => '40',
+	setUp => "Cor"
 	);
 while (@ARGV) {
     $_ = shift @ARGV;
@@ -27,7 +28,7 @@ while (my($key, $val) = each %ARG) {
 
 my $Simu = $Dir."/".$ARG{files};
 my $FilesPerJob = $ARG{FilesPerJob};
-my $OutDir = $Dir."/scheduler/output";
+my $OutDir = $Dir."/scheduler/output_".$ARG{setUp};
 $glb = $Simu;
 print "Macro : $macro\n";
 print "glb=$glb\n";
@@ -36,7 +37,7 @@ print "#Files : $#Files+1\n";
 print "outDir : $OutDir\n";
 print "FilesPerJob = $FilesPerJob\n";
 
-my $submit = "submitAna_".$mEnergy."\.xml";
+my $submit = "submitAna_".$ARG{setUp}."\.xml";
 open XML,">$submit";
 print XML '<?xml version="1.0" encoding="utf-8" ?> 
 <job name="DiEAna" maxFilesPerProcess="1" filesPerHour="10" simulateSubmission="false" fileListSyntax="paths">
@@ -56,10 +57,10 @@ foreach my $file (@Files){
     chomp $file;
     print "$file\n";
     if($ctr == 0 ) {
-	$LISTNAME = $Dir."/scheduler/submit/job_$listctr.list";
+	$LISTNAME = $Dir."/scheduler/submit/job_$ARG{setUp}_$listctr.list";
 	$OutName  = $OutDir."/job_$listctr.root";
 	$log      = $OutDir."/job_$listctr.log";
-	$csh      = $Dir."/scheduler/submit/job_$listctr.csh";
+	$csh      = $Dir."/scheduler/submit/job_$ARG{setUp}_$listctr.csh";
 	print "Create list $LISTNAME !!\n";
 	open LIST, ">$LISTNAME";
 	$listctr += 1;

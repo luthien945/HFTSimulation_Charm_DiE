@@ -3,6 +3,8 @@
 current_data_time="`date \"+%m/%d %H:%M:%S\"`"
 echo $current_data_time
 job=$1
+nevt=$2
+doRnd=1;
 #run=${job: -1}
 #run=$job;
 run=`perl -e "my @ss = split /_/, \"$job\"; print @ss[1];"`
@@ -24,12 +26,11 @@ at=`perl -e 'srand; print int(rand(99)+1)'`
 cp -p /global/project/projectdirs/star/pwg/starlfs/yiguo/Simulation/Star_charm_DiE/PileUpFiles/pileup/pileupSet$at/pile**.root ./Files_$job/pile_up/pile_up$at.root
 cp -p /global/project/projectdirs/star/pwg/starlfs/yiguo/Simulation/Star_charm_DiE/scheduler/output/BackGroundFiles/Hijing_bg_1/hijing_bg_$run.starsim.root  ./Files_$job/Hijing_bg/hijing_bg_$run.starsim.root
 
-nevt=$2
 
 function doPythia {
 echo "Generating Pythia charm event tree"
 root4star <<EOF
-.x runHF.C($run, $nevt, 200)
+.x runHF.C($run, $nevt, 200, $doRnd)
 .q
 EOF
 mv pythiaevent*.root ./Files_$job/Pythia6/.

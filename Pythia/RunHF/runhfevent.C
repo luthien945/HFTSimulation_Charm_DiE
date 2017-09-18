@@ -13,6 +13,7 @@
 #include "TRandom.h"
 #include "TPythia6.h"
 #include "TMCParticle.h"
+#include "TRandom3.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -25,13 +26,19 @@ using std::endl;
 #define eMass 0.000511
 #define charmMass 1.5
 
-void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, char *folder="out_test"){
+TVector3 calDaughterMom_Rdn(TVector3 eMom, TVector3 paMom, TVector3 paMom_new);
+TVector3 calDaughterPos_Rdn(TVector3 ePositon, TVector3 paMom, TVector3 paMom_new);
+
+void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, bool doRandomCor = kTRUE){
     TStopwatch*   stopWatch = new TStopwatch();
     stopWatch->Start();
+    TRandom3 *mRandom = new TRandom3();
+    mRandom->SetSeed(0);
     gSystem->Load("libPhysics");
     //gSystem->Load("libEGi.so");
     gSystem->Load("libEGPythia6.so");
     gSystem->Load("libPythia6.so");
+    if(doRandomCor) cout<<"YiSaid: RunHFEvent SetUp: do Random correlation!!!!!"<<endl;
     //gSystem->Load("/home/yfzhang/work/MC/pythia6/libPythia6.so");
     //    gSystem->Load("TPythia6/TPythia6.so");
 
@@ -64,6 +71,7 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
     eTree->Branch("eePhi"         , &meTree.eePhi         , "eePhi/F");
     eTree->Branch("eeRapidity"    , &meTree.eeRapidity    , "eeRapidity/F");
     eTree->Branch("eeM"           , &meTree.eeM           , "eeM/F");
+
     eTree->Branch("ePosParentGID" , &meTree.ePosParentGID , "ePosParentGID/I");
     eTree->Branch("ePosParentPt"  , &meTree.ePosParentPt  , "ePosParentPt/F");
     eTree->Branch("ePosParentEta" , &meTree.ePosParentEta , "ePosParentEta/F");
@@ -71,6 +79,10 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
     eTree->Branch("ePosPt"        , &meTree.ePosPt        , "ePosPt/F");
     eTree->Branch("ePosEta"       , &meTree.ePosEta       , "ePosEta/F");
     eTree->Branch("ePosPhi"       , &meTree.ePosPhi       , "ePosPhi/F");
+    eTree->Branch("ePosVx"        , &meTree.ePosVx        , "ePosVx/F");
+    eTree->Branch("ePosVy"        , &meTree.ePosVy        , "ePosVy/F");
+    eTree->Branch("ePosVz"        , &meTree.ePosVz        , "ePosVz/F");
+
     eTree->Branch("eNegParentGID" , &meTree.eNegParentGID , "eNegParentGID/I");
     eTree->Branch("eNegParentPt"  , &meTree.eNegParentPt  , "eNegParentPt/F");
     eTree->Branch("eNegParentEta" , &meTree.eNegParentEta , "eNegParentEta/F");
@@ -78,15 +90,10 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
     eTree->Branch("eNegPt"        , &meTree.eNegPt        , "eNegPt/F");
     eTree->Branch("eNegEta"       , &meTree.eNegEta       , "eNegEta/F");
     eTree->Branch("eNegPhi"       , &meTree.eNegPhi       , "eNegPhi/F");
+    eTree->Branch("eNegVx"        , &meTree.eNegVx        , "eNegVx/F");
+    eTree->Branch("eNegVy"        , &meTree.eNegVy        , "eNegVy/F");
+    eTree->Branch("eNegVz"        , &meTree.eNegVz        , "eNegVz/F");
 
-    //eTree->Branch("ePaPosPt",&meTree.ePaPosPt,"ePaPosPt/F");
-    //eTree->Branch("ePaPosEta",&meTree.ePaPosEta,"ePaPosEta/F");
-    //eTree->Branch("ePaPosPhi",&meTree.ePaPosPhi,"ePaPosPhi/F");
-    //eTree->Branch("ePaPosY",&meTree.ePaPosY,"ePaPosY/F");
-    //eTree->Branch("ePaNegPt",&meTree.ePaNegPt,"ePaNegPt/F");
-    //eTree->Branch("ePaNegEta",&meTree.ePaNegEta,"ePaNegEta/F");
-    //eTree->Branch("ePaNegPhi",&meTree.ePaNegPhi,"ePaNegPhi/F");
-    //eTree->Branch("ePaNegY",&meTree.ePaNegY,"ePaNegY/F");
     //======================== initial parameters ==========================
 
     // Initialize Pythia
@@ -234,24 +241,32 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	if(nstring != 2) continue;
 	hnEvents->Fill(2);
 
-	int ne = 0;
-	int   ePos_ppid = 0;
-	float ePos_Pt = -999.;
-	float ePos_Eta = -999.;
-	float ePos_Phi = -999.;
-	int   eNeg_ppid = 0;
-	float eNeg_Pt = -999.;
-	float eNeg_Eta = -999.;
-	float eNeg_Phi = -999.;
-
-	float ePaPos_Pt = -999.;
+	int   ne         = 0;
+	int   ePos_ppid  = 0;
+	float ePos_Pt    = -999.;
+	float ePos_Eta   = -999.;
+	float ePos_Phi   = -999.;
+	float ePos_Vx    = -999.;
+	float ePos_Vy    = -999.;
+	float ePos_Vz    = -999.;
+	float ePaPos_Pt  = -999.;
 	float ePaPos_Eta = -999.;
 	float ePaPos_Phi = -999.;
 	float ePaPos_Y   = -999.;
-	float ePaNeg_Pt = -999.;
+	float ePaPos_M   = -999.;
+
+	int   eNeg_ppid  = 0;
+	float eNeg_Pt    = -999.;
+	float eNeg_Eta   = -999.;
+	float eNeg_Phi   = -999.;
+	float eNeg_Vx    = -999.;
+	float eNeg_Vy    = -999.;
+	float eNeg_Vz    = -999.;
+	float ePaNeg_Pt  = -999.;
 	float ePaNeg_Eta = -999.;
 	float ePaNeg_Phi = -999.;
 	float ePaNeg_Y   = -999.;
+	float ePaNeg_M   = -999.;
 
 	float cPt  = -999.;
 	float cEta = -999.;
@@ -320,11 +335,18 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	    float py = mElectron->GetPy();
 	    float pz = mElectron->GetPz();
 
+	    float vx = mElectron->GetVx();
+	    float vy = mElectron->GetVy();
+	    float vz = mElectron->GetVz();
+
+	    float pvx = meParent->GetVx();
+	    float pvy = meParent->GetVy();
+	    float pvz = meParent->GetVz();
+
 	    TVector3 Mom(px,py,pz);
 	    float pt  = Mom.Perp();
 	    float eta = Mom.PseudoRapidity();
 	    float phi = Mom.Phi();
-
 
 	    float papx = meParent->GetPx();
 	    float papy = meParent->GetPy();
@@ -336,33 +358,40 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	    float paeta = paMom.PseudoRapidity();
 	    float paphi = paMom.Phi();
 	    float pay = paMom.Rapidity();
-
-	    //if(fabs(eta)>1.) continue;
-
-	    //if(fabs(paeta)>1.2) continue;
+	    float pam = meParent->GetMass(); 
 
 	    if(epid == -11) {
-		ePos_ppid = e_parentpid;
-		ePos_Pt   = pt;
-		ePos_Eta  = eta;
-		ePos_Phi  = phi;
+		ePos_ppid  = e_parentpid;
+		ePos_Pt    = pt;
+		ePos_Eta   = eta;
+		ePos_Phi   = phi;
 
-		ePaPos_Pt = papt;
+		ePos_Vx    = vx;
+		ePos_Vy    = vy;
+		ePos_Vz    = vz;
+
+		ePaPos_Pt  = papt;
 		ePaPos_Eta = paeta;
 		ePaPos_Phi = paphi;
 		ePaPos_Y   = pay;
+		ePaPos_M   = pam;
 	    }
 
 	    if(epid == 11) {
-		eNeg_ppid = e_parentpid;
-		eNeg_Pt   = pt;
-		eNeg_Eta  = eta;
-		eNeg_Phi  = phi;
+		eNeg_ppid  = e_parentpid;
+		eNeg_Pt    = pt;
+		eNeg_Eta   = eta;
+		eNeg_Phi   = phi;
 
-		ePaNeg_Pt = papt;
+		eNeg_Vx    = vx;
+		eNeg_Vy    = vy;
+		eNeg_Vz    = vz;
+
+		ePaNeg_Pt  = papt;
 		ePaNeg_Eta = paeta;
 		ePaNeg_Phi = paphi;
 		ePaNeg_Y   = pay;
+		ePaNeg_M   = pam;
 	    }
 
 	    ne ++;
@@ -379,6 +408,61 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	TLorentzVector eNegMom(0,0,0,0);
 	TLorentzVector eeMom(0,0,0,0);
 
+	TVector3 eMom(0,0,0);
+	TVector3 ePosition(0,0,0);
+	TVector3 ePaMom(0,0,0);
+
+	TVector3 eMom_Rdn(0,0,0);
+	TVector3 ePosition_Rdn(0,0,0);
+	TVector3 ePaMom_Rdn(0,0,0);
+
+
+	// do Random correlation 
+	if(doRandomCor) {
+	    eMom.SetPtEtaPhi(eNeg_Pt,eNeg_Eta,eNeg_Phi);
+	    ePosition.SetXYZ(eNeg_Vx,eNeg_Vy,eNeg_Vz);
+	    ePaMom.SetPtEtaPhi(ePaNeg_Pt, ePaNeg_Eta, ePaNeg_Phi);
+	    double phi_rdn = TMath::Pi()*mRandom->Rndm()*2.; 
+	    double eta_rdn = (mRandom->Rndm()*2-1)*2.4;
+	    ePaMom_Rdn.SetPtEtaPhi(ePaNeg_Pt,eta_rdn,phi_rdn);
+
+	    // keep kinematics in charm rest frame
+	    TLorentzVector e4Mom(0,0,0,0);
+	    TLorentzVector e4Mom_Rdn(0,0,0,0);
+	    TLorentzVector c4Mom(0,0,0,0);
+	    TLorentzVector c4Mom_Rdn(0,0,0,0);
+	    e4Mom.SetXYZM(eNeg_Pt, eNeg_Eta, eNeg_Phi, eMass);
+	    c4Mom.SetXYZM(ePaNeg_Pt, ePaNeg_Eta, ePaNeg_Phi, ePaNeg_M);
+	    c4Mom_Rdn.SetXYZM(ePaNeg_Pt, eta_rdn, phi_rdn, ePaNeg_M);
+
+	    TVector3 inv_boost(0,0,0);
+	    TVector3 rdn_boost(0,0,0);
+	    inv_boost = -1*c4Mom.BoostVector();
+	    rdn_boost = c4Mom_Rdn.BoostVector();
+	    e4Mom_Rdn = e4Mom;
+	    e4Mom_Rdn.Boost(inv_boost); 
+	    e4Mom_Rdn.Boost(rdn_boost);
+	    eMom_Rdn = e4Mom_Rdn.Vect();
+	    ePosition_Rdn = ePaMom_Rdn.Unit()*ePosition.Mag();
+
+	    //cout<<"e : "; eMom.Print();
+	    //cout<<"e_Rdn : ";eMom_Rdn.Print();
+	    //cout<<"position : ";ePosition.Print();
+	    //cout<<"position_Rdn : ";ePosition_Rdn.Print();
+	    //cout<<"ePaMom : "<<ePaMom.Pt()<<" "<<ePaMom.Eta()<<" "<<ePaMom.Phi()<<endl;
+	    //cout<<"ePaMom_Rdn_Rdn : "<<ePaMom_Rdn.Pt()<<" "<<ePaMom_Rdn.Eta()<<" "<<ePaMom_Rdn.Phi()<<endl;
+	    //cout<<"e rest0 :"; e4rest0.Print();
+	    //cout<<"e rest1 :"; e4rest1.Print();
+
+	    eNeg_Vx = ePosition_Rdn.X();
+	    eNeg_Vy = ePosition_Rdn.Y();
+	    eNeg_Vz = ePosition_Rdn.Z();
+
+	    eNeg_Pt = eMom_Rdn.Pt();
+	    eNeg_Eta = eMom_Rdn.Eta();
+	    eNeg_Phi = eMom_Rdn.Phi();
+	}
+
 	ePosMom.SetPtEtaPhiM(ePos_Pt,ePos_Eta,ePos_Phi,eMass);
 	eNegMom.SetPtEtaPhiM(eNeg_Pt,eNeg_Eta,eNeg_Phi,eMass);
 
@@ -387,18 +471,12 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	double eePt = eeMom.Pt();
 	double eeM  = eeMom.M();
 
-	if(fabs(eeRapidity)<1.&&fabs(ePos_Eta)< 1.&& fabs(eNeg_Eta)<1.&&ePos_Pt>0.15&&ePos_Pt<0.35&&eNeg_Pt>3.5){
-	    heeMvsPt_AllAcc->Fill(eePt,eeM);
-	    heedPhi_All->Fill(ePos_Phi-eNeg_Phi);
-	}
-	if(fabs(eeRapidity)<1.&&fabs(ePos_Eta)< 0.5&& fabs(eNeg_Eta)<0.8&&ePos_Pt>1.8&&eNeg_Pt>2.){
-	    heeMvsPt_TrgAcc->Fill(eePt,eeM);
-	    heedPhi_Acc->Fill(ePos_Phi-eNeg_Phi);
-	}
-	if(fabs(ePos_Eta)< 0.5&& fabs(eNeg_Eta)<0.8&&ePos_Pt>1.8&&eNeg_Pt>2.){
+	if(fabs(ePos_Eta)< 1. && fabs(eNeg_Eta)<1. &&ePos_Pt>0.2 &&eNeg_Pt>0.2){
 	    heeMvsPt_TrgAcc0->Fill(eePt,eeM);
 	    heedPhi_Acc0->Fill(ePos_Phi-eNeg_Phi);
 	}
+
+	if(fabs(ePos_Eta)>1.2 || fabs(eNeg_Eta)>1.2) continue;
 
 	meTree.EventId       = nevent;
 	meTree.cPt           = cPt;
@@ -423,6 +501,9 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	meTree.ePosPt        = ePos_Pt;
 	meTree.ePosEta       = ePos_Eta;
 	meTree.ePosPhi       = ePos_Phi;
+	meTree.ePosVx        = ePos_Vx;
+	meTree.ePosVy        = ePos_Vy;
+	meTree.ePosVz        = ePos_Vz;
 
 	meTree.eNegParentGID = eNeg_ppid;
 	meTree.eNegParentPt  = ePaNeg_Pt;
@@ -431,6 +512,9 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	meTree.eNegPt        = eNeg_Pt;
 	meTree.eNegEta       = eNeg_Eta;
 	meTree.eNegPhi       = eNeg_Phi;
+	meTree.eNegVx        = eNeg_Vx;
+	meTree.eNegVy        = eNeg_Vy;
+	meTree.eNegVz        = eNeg_Vz;
 
 	//meTree.ePaPosPt        = ePaPos_Pt;
 	//meTree.ePaPosEta       = ePaPos_Eta;
@@ -447,8 +531,6 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
 	if(nevent%100==0) {
 	    cout<<"on event #"<<nevent<<" tried : "<<counts<<endl;
 	}
-
-
     }//event
     cout<<"test out loop"<<endl;
 
@@ -477,3 +559,30 @@ void runhfevent(int irun=1, int Nevt=10, int iseed=789456, float energy = 62.4, 
     stopWatch->Stop();
     stopWatch->Print();
 }
+
+TVector3 calDaughterMom_Rdn(TVector3 eMom, TVector3 paMom, TVector3 paMom_new) {
+    TVector3 eMom_new(0, 0, 0);
+
+
+    return eMom_new;
+}
+
+TVector3 calDaughterPos_Rdn(TVector3 ePositon, TVector3 paMom, TVector3 paMom_new){
+    TVector3 ePositon_new(0, 0, 0);
+    
+    return ePositon_new;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
